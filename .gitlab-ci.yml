@@ -1,0 +1,80 @@
+##
+## Copyright (c) 2023 The Johns Hopkins University Applied Physics
+## Laboratory LLC.
+##
+## This file is part of the Asynchronous Network Managment System (ANMS).
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+##     http://www.apache.org/licenses/LICENSE-2.0
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+##
+## This work was performed for the Jet Propulsion Laboratory, California
+## Institute of Technology, sponsored by the United States Government under
+## the prime contract 80NM0018D0004 between the Caltech and NASA under
+## subcontract 1658085.
+##
+default:
+  # Unrestricted build environment
+  image: docker-remote.artifactory.jhuapl.edu/ubuntu:22.04
+
+include:
+  # Run pipeline only on branches, not MRs
+  - template: 'Workflows/Branch-Pipelines.gitlab-ci.yml'
+  # auto-static-analysis
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Code-Quality.gitlab-ci.yml
+
+variables:
+  GIT_SUBMODULE_STRATEGY: recursive
+  DEBIAN_FRONTEND: "noninteractive"
+  # for Python/PIP
+  PIP_CERT: /etc/ssl/certs/ca-certificates.crt
+  PIP_DEFAULT_TIMEOUT: "300"
+  # for Ruby/bolt
+  SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+
+
+stages:
+  - build
+  - test
+  - deploy
+
+.prep-install-ca: &prep-install-ca |
+  apt-get update && apt-get install -y ca-certificates curl
+  mkdir -p /usr/local/share/ca-certificates
+  curl -svL http://apllinuxdepot.jhuapl.edu/linux/APL-root-cert/JHUAPL-MS-Root-CA-05-21-2038-B64-text.cer -o /usr/local/share/ca-certificates/JHUAPL-MS-Root-CA-05-21-2038-B64-text.crt
+  update-ca-certificates
+
+
+docs:
+  stage: build
+  needs: []
+  before_script:
+    - *prep-install-ca
+    - apt-get update && apt-get install -y cmake make coreutils ruby asciidoctor graphviz inkscape dblatex docbook-xsl-ns xsltproc xmlstarlet
+    - gem install asciidoctor-diagram
+  script:
+    - DESTDIR=public ./build.sh
+  artifacts:
+    paths:
+      - "public"
+
+# Job name to use Gitlab Pages feature
+pages:
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  needs:
+    - job: docs
+      artifacts: true
+  script:
+    - "true" # Just a copy from job:docs
+  artifacts:
+    paths:
+      - "public"

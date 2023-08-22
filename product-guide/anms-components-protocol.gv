@@ -1,0 +1,93 @@
+digraph AMMOS {
+  node [shape=box,style=filled];
+
+  subgraph cluster_ANMS {
+    label="ANMS Instance";
+
+    authnz [label="CAM Gateway" group=main];
+    nginx [group=main];
+    authnz -> nginx [label="HTTP"];
+    
+    anms_ui [label="anms-ui" group=main];
+    anms_core [label="anms-core" group=main];
+    transcoder [label="transcoder"];
+    aricodec [label="aricodec"];
+    mqtt_broker [label="mqtt-broker"];
+    subgraph cluster_manager {
+      label="ion-manager";
+      style=filled;
+
+      amp_manager [label="AMP Manager"];
+      bp_manager [label="BP Agent"];
+      cla_manager [label="CLA"];
+      
+      amp_manager -> bp_manager [label="IPC"];
+      bp_manager -> cla_manager [label="BP"];
+    }
+    opensearch [label="opensearch"]
+    opensearch_dash [label="opensearch-dashboards"];
+
+    adminer;
+    postgres;
+    redis;
+
+    nginx -> adminer [label="HTTP"];
+    adminer -> postgres [label="PGSQL"];
+    
+    nginx -> opensearch_dash -> opensearch [label="HTTP"];
+
+    nginx -> anms_ui -> anms_core [label="HTTP"];
+    anms_ui -> redis [label="RESP"];
+    anms_core -> postgres [label="PGSQL"];
+    anms_core -> amp_manager [label="REST/HTTP"];
+    anms_core -> mqtt_broker [label="MQTT"];
+    transcoder -> mqtt_broker [label="MQTT"];
+    aricodec -> mqtt_broker [label="MQTT"];
+
+    amp_manager -> postgres [label="PGSQL"];
+
+    grafana;
+    grafana_image_renderer [label="grafana-image-renderer"];
+    nginx -> grafana [label="HTTP"];
+    grafana_image_renderer -> grafana [label="HTTP"];
+    
+    grafana -> postgres [label="PGSQL"];
+  }
+
+  subgraph cluster_infra {
+    label="AMMOS Infrastructure";
+
+    cam_server [label="CAM Server"];
+    ldap_server [label="User Directory"];
+    
+    cam_server -> ldap_server [label="LDAP"];
+  }
+  authnz -> cam_server [style=dashed];
+
+  subgraph cluster_user_agent {
+    label="User Agent [0..*]";
+    style=filled;
+
+    ui_runtime [label="ANMS UI" group=main];
+    browser [label="Web Browser [0..*]" group=main];
+    ui_runtime -> browser [label="ECMAScript"];
+    browser -> authnz [label="HTTP"];
+
+    proxy [label="Proxy application [0..*]"];
+    proxy -> authnz [label="HTTP"];
+  }
+  
+  subgraph cluster_agents {
+    label="Managed Device [0..*]";
+    style=filled;
+
+    amp_agent [label="AMP Agent"];
+    bp_managed [label="BP Agent"];
+    cla_managed [label="CLA"];
+
+    amp_agent -> bp_managed [label="IPC"];
+    bp_managed -> cla_managed [label="BP"];
+  }
+  #bp_manager -> bp_managed [style=dashed dir=both];
+  cla_manager -> cla_managed [label="IP" dir=both];
+}

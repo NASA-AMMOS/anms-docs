@@ -1,0 +1,604 @@
+////
+Copyright (c) ${years} The Johns Hopkins University Applied Physics
+Laboratory LLC.
+
+This file is part of the Asynchronous Network Managment System (ANMS).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+This work was performed for the Jet Propulsion Laboratory, California
+Institute of Technology, sponsored by the United States Government under
+the prime contract 80NM0018D0004 between the Caltech and NASA under
+subcontract 1658085.
+////
+= Asynchronous Network Management System (ANMS) Product Guide
+:doctype: book
+:backend: docbook5
+:docinfo: shared
+// :source-language: bash
+:toc:
+
+
+[preface]
+== Introduction
+
+This Product Guide provides architectural and maintenance details about the Asynchronous Network Managment System (ANMS), which is part of the Advanced Multi Mission Operations System (AMMOS) suite of tools.
+
+=== Identification
+
+[%header,width=75%,cols=2*]
+|===
+|Property
+|Value
+
+|Configuration ID (CI)
+|631.17
+
+|Element
+|Multi-Mission Control System (MMCS)
+
+|Program Set
+|Asynchronous Network Management System (ANMS)
+
+|Version
+|1.0
+|===
+
+=== Scope
+
+This document describes technical details about the ANMS installation, upgrade, monitoring, and maintenance.
+For details about the user interface and workflows of the ANMS see the <<anms-user-guide>>.
+
+[glossary]
+=== Terminology
+
+[glossary]
+Asynchronous Management Protocol (AMP)::
+The application protocol used to communicate between ANMS and its managed agents.
+Bundle Protocol (BP)::
+The overlay network protocol used to transport AMP messages between ANMS and its managed agents.
+BP Agent (BPA)::
+The instantiation of a BP node with a unique administrative Endpoint ID.
+BP Endpoint::
+The source or destination of a BP bundle.
+Container::
+An isolated unit of runtime state within a host.
+Convergence Layer Adapter (CLA)::
+The mechanims used to transport bundles within an underlay (IP) network.
+Endpoint ID (EID)::
+The identifier of a BP Endpoint; names the source and destination for a BP bundle.
+Host::
+A single node on the network and a single instance of an operating system.
+One host can have many interfaces and many IP addresses, but only one canonical host name.
+Internet Protocol (IP)::
+The network protocol used for inter-container communication and for BP convergence layer messaging with AMP Agents.
+
+
+== ANMS Architecture
+
+The ANMS is designed with a microservice architecture using containers for isolation and network protocols to communicate between services.
+Many of the service interfaces use stateless HTTP exchanges, some use MQTT for pub-sub interactions and some use PostgreSQL for long-term configuration and data warehousing.
+Although some of the subsystems have a preferred start-up order (to ensure initial configuration is valid and consistent) the containers can be restarted in any order with a few specific exceptions.
+
+
+=== ANMS Components
+
+The subsystems of the ANMS (all Docker containers) are illustrated as gray blocks within the "ANMS Instance" group in the diagram of <<fig-anms-components-protocol>>.
+The entire ANMS instance is made to be run on a single host, with future plans to allow installing in a more distributed environment.
+Currently the ANMS provides security at the boundary of the instance but not between comtainers (see <<sec-security>> for details), which would be required for a distributed installation.
+
+A higher-level logical view of the ANMS is shown in <<fig-anms-components-logical>> where some of the internal infrastructure containers (e.g., PostgreSQL database, MQTT broker) are removed for clarity.
+
+The User Agents in both diagrams are how a user can interact with the ANMS, which is solely via HTTP exchanges. Most of the ANMS API follows RESTful principals of stateless service interactions, while some of the API is more browser-oriented to provide UI visuals.
+
+[#fig-anms-components-protocol]
+.ANMS Components with Protocol Associations
+graphviz::anms-components-protocol.gv[format=svg]
+
+[#fig-anms-components-logical]
+.ANMS Primary Components with Logical Associations
+graphviz::anms-components-logical.gv[format=svg]
+
+
+[#sec-deployment]
+=== Deployment
+
+The target host will be running the RedHat Enterprise Linux \(((RHEL))) version 8 (RHEL-8) with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
+
+The ANMS is intended to be deployed using the ((Puppet)) orchestrator, either from a local Puppet apply execution or configured from a central Puppet server.
+Part of the ANMS source is a Puppet module "anms" to automate the configuration of an ANMS deployment.
+Specific procedures for performing an installation using a local Puppet apply are in <<sec-proc-install>>.
+
+Conditions for installing the ANMS are a host with packages identified in <<target-host-packages>>, at least 7{nbsp}GiB of filesystem space for docker image storage, and additional space for long-term data warehouse storage.
+The total amount of storage needed depends on the mission use of reports, specifically the average size and rate of reported data.
+
+[#target-host-packages]
+.Target host packages
+[%header,width=75%,cols=2*]
+|===
+|Package Name
+|Version Minimum
+
+|docker-ce
+|23.0.1
+
+|docker-compose
+|1.29.2
+
+|Puppet
+|7
+|===
+
+[#sec-deployment-camemu]
+==== Using a CAM Gateway Emulator
+
+To allow the ANMS to be tested in environments where a CAM Server is unavailable or too burdensome to set up, the ANMS can be built with an emulator of the CAM Gateway which uses static accounts, credentials, and access controls.
+The environment `AUTHNZ_EMU=1` during a build (see <<sec-proc-build>>) enables the CAM Gateway emulator behavior.
+
+CAUTION: The CAM Gateway emulator is for demonstration only and must not be present in a production installation.
+
+The static accounts available in the emulator, defined in an `htpasswd` file, are:
+
+`test`::
+With password `test`, is able to access all typical ANMS UI and features.
+`admin`::
+With password `admin`, is able to access all typical ANMS UI and features as well as the `/adminer/...` and `/nm/...` APIs.
+
+[#sec-deploy-containers]
+=== Containers
+
+The containers defined by the ANMS compose configuration in <<sec-host-files>> are as follows in alphabetical order.
+Associations between these containers are illustrated in <<fig-anms-components-protocol>>.
+
+`adminer`::
+Administrative access to the PostgreSQL database, which requires special authorization.
+Exposes TCP port 8080 for HTTP.
+`authnz`::
+The CAM Gateway reverse proxy for authentication, authorization, and auditing \(((AAA))); also the endpoint of user agent TLS connections.
+This container uses the external `ammos-tls` volume for TLS configuration (see <<sec-proc-install-tls>>).
+Exposes TCP port 443 for HTTPS and 80 for HTTP, both mapped to the same host port numbers.
+`anms-core`::
+The ANMS backend REST services.
+Exposes TCP port 5555 for HTTP.
+`anms-ui`::
+The ANMS frontend REST services and browser client UI.
+Exposes TCP port 9030 for HTTP.
+`grafana`::
+The data warehouse plotting engine.
+This uses the `grafana-data` volume for storage.
+Exposes TCP port 3000 for HTTP.
+`grafana-image-renderer`::
+Image renderer for the `grafana` subsystem.
+Exposes TCP port 8081 for internal APIs.
+`ion-manager`::
+A combination of the AMP Manager used by ANMS and the BP Agent used for message transport.
+Exposes UDP port 1113 for LTPCL and port 4556 for UDPCL, and TCP port 8089 for HTTP API; the CL ports are mapped to the same host port numbers.
+`aricodec`::
+A service to convert ARI between text and compressed binary form based on available ADMs.
+`mqtt-broker`::
+The broker host for MQTT pub-sub messaging.
+Exposes TCP port 1883 for MQTT.
+`nginx`::
+Frontend load balancer and HTTP router.
+Principal access is to `anms-ui` and `grafana`.
+Exposes TCP port 80 for HTTP.
+`opensearch`::
+Log aggregator for the ANMS. This uses the `opensearch` volume for storage.
+Exposes TCP port 9200 and 9600 for internal APIs.
+`opensearch-dashboards`::
+A user interface for accessing the opensearch logs.
+Exposes TCP port 5601 for HTTP.
+`postgres`::
+Persistent database for the ANMS.
+This uses the `postgres-data` volume for storage.
+Exposes TCP port 5432 for PSQL.
+`redis`::
+A database for state keeping from the ANMS UI.
+Exposes TCP port 6379 for redis API.
+`transcoder`::
+An intermediate service to bookkeep transcoding requests from the ANMS to the ARI CODEC engine.
+
+
+[#sec-host-files]
+=== Filesystem
+
+Because the ANMS is deployed as a Docker Compose configuration, the only primary files present on the host are to configure docker, its use as a system service, and the system firewall.
+
+The principal files and directories used by ANMS are:
+
+`/ammos/anms`::
+The project-specific deployment path for compose configurations, under which are:
+`.env`:::
+Environment configuration for the ANMS containers.
+`docker-compose.yml`:::
+The actual Docker Compose configuration for the ANMS, which is configured for auto-startup containers at Docker start.
+
+Secondary files related to the ANMS deployment are:
+
+`/etc/docker/daemon.json`::
+Configured to enable SELinux for containers.
+`/var/cache/puppet/puppet-selinux/modules`::
+The containing directory for SELinux modules for the ANMS containers (see <<sec-security>>).
+
+
+[#sec-network]
+=== Networking
+
+The target host will be running RHEL-8 with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
+
+The Docker network configuration for the ANMS includes host port forwarding for the following services:
+
+HTTPS::
+Default port 443 forwarded to the `authnz` container for HTTP use.
+UDPCL::
+Default port 4556 forwarded to the `ion-manager` container for BP use.
+LTPCL::
+Default port 1113 forwarded to the `ion-manager` container for BP use.
+
+The current ANMS will allow only the BP UDP Convergence Layer \(((UDPCL))) to be configured on agents, but this is a UI restriction and not an intrinsic limitation of the BP Agent used by the ANMS.
+Future versions of the ANMS will allow more complex convergence layer configurations.
+
+[NOTE]
+The ANMS deployment manifest includes an optional set of local AMP Agents to use to test with.
+These use the local Docker network to communicate with the ANMS, while real remote agents will require the external network configuration to include port forwarding and host name resolution for the ANMS BP Agent.
+How those are configured is outside the scope of this document.
+
+
+[#sec-security]
+=== Security
+
+The host on which the ANMS instance runs is expected to have ((FIPS-140)) mode enabled and ((SELinux)) enabled and in enforcing mode.
+Part of the ANMS deployment includes an SELinux module for each of the component containers which allow all necessary inter-service communication.
+If issues with SELinux are suspected in a deployment, follow the procedures in <<sec-proc-mon-selinux>> to find any audit events related to the ANMS.
+
+The host is also expected to have a running OS-default firewall which will be configured by the Puppet module to allow HTTPS for user agents and BP UDPCL and LTPCL default ports.
+
+The interface between ANMS and its User Agents is TLS-secured HTTP with a PKIX certificate supplied by the host network management and chained to the CA hierarchy of the network. 
+
+The interface between ANMS and its managed AMP Agents is not currently secured, pending updates to the BP Agent to enable BPSec for integrity and/or confidentiality of AMP messages.
+
+
+[#sec-database]
+=== Long-Term Databases
+
+The ANMS uses an internal PostgreSQL database for following purposes, all within the same schema `amp_core`:
+
+User Configuration::
+Each user account authorized to access the ANMS can have parameters associated with their account, mostly related to UI parameters.
+((ADM)) configuration::
+The most static configuration of the ANMS is the set of ADMs available to all agents managed by that ANMS instance.
+((Agent)) configuration::
+The Agent configuration consists of agents which are known to, and managed by, the ANMS which are parameterized by their AMP messaging BP EID and their associated CL parameters (network name/address and port).
+Reported ((Data Warehouse))::
+When reports arrive from managed agents and are associated with known ADMs they are disassembled and stored as object-values in the historical data warehouse.
+
+
+[#sec-proc]
+== Procedures
+
+This chapter includes specific procedures related to managing an ANMS instance.
+
+
+[#sec-proc-build]
+=== Building
+
+The ANMS source is composed of a top-level repository `ammos-anms` and a number of submodule repositories; all of them are required for building the ANMS.
+
+. The top-level checkout can be done with:
++
+----
+git clone --recursive --branch <TAGNAME> <BASEURL>/ammos-anms.git
+----
+. Optional: switching to a different tag or branch can be done with the sequence:
++
+----
+git checkout <TAGNAME>
+git submodule update --init --recursive
+----
+. If necessary, add the local user to the `docker` access group with:
++
+----
+sudo usermod -a -G docker ${USER}
+----
+. The container image building is then executed with:
++
+----
+export DOCKER_IMAGE_PREFIX=<DOCKERURL>
+export DOCKER_IMAGE_TAG=latest
+./build.sh buildonly
+----
++
+which by default uses the current top-level branch name as the tag for all container images.
+
+[NOTE]
+====
+To build an ANMS that uses an emulator for the CAM Gateway (which means that the ANMS will not require a CAM server), have the following environment set in the build step above:
+----
+export AUTHNZ_EMU=1
+----
+====
+
+[#sec-proc-install]
+=== Installation
+
+The ANMS uses Puppet version 7 <<puppet-agent>> to install requisite system packages and configure system files and services.
+In addition, Bolt <<puppet-bolt>> is needed to install needed Puppet modules and run the Puppet agent remotely.
+
+CAUTION: The example TLS configuration in this proceure is for demonstration only and must not be present in a production installation.
+Details for creating a proper TLS volume are in <<sec-proc-install-tls>>.
+
+To install the ANMS on the local host perform the following:
+
+. A TLS configuration must be embedded in a volume mounted by the `authnz` frontend container with contents described in <<sec-proc-install-tls>>.
+This can be done with a boilerplate test-only CA and certificates by running:
++
+----
+./create_volume.sh ./puppet/modules/apl_test/files/anms/tls
+----
+. The deployment configuration is set by editing the file `puppet/data/override.yaml` to contain similar to:
++
+----
+anms::docker_image_prefix: "" # Matching the DOCKER_IMAGE_PREFIX from build procedure
+anms::docker_image_tag: "latest" # Matching the tag name from build procedure
+anms::docker_registry_user: ""
+anms::docker_registry_pass: ""
+----
+. Pull the necessary upstream Puppet modules with:
++
+----
+./puppet/prep.sh
+----
+. Perform a dry-run of the puppet apply with:
++
+----
+sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test --noop
+----
+and verify that there are no unexpected changes.
+. Perform the actual puppet apply with:
++
+----
+sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test
+----
+
+[#sec-proc-install-tls]
+==== TLS Configuration Volume
+
+The docker volume mounted into the `authnz` container follows the AMMOS conventions for TLS certificate, private key, and CA file paths and contents.
+
+The volume must contain the specific files:
+
+`/certs/ammos-server-cert.pem`::
+The PEM-encoded certificate for the ANMS frontend itself.
+It must have extended key use of https://www.iana.org/assignments/smi-numbers/smi-numbers.xhtml#smi-numbers-1.3.6.1.5.5.7.3[`id-kp-serverAuth`] for a web server.
+`/private/ammos-server-key.pem`::
+The PEM-encoded non-password-protected private key corresponding to the server certificate.
+`/certs/ammos-ca-bundle.crt`::
+The PEM-encoded CA bundle containing at least the CA chain used to sign the server certificate.
+
+=== Upgrading
+
+Because the ANMS is deployed as a Docker Compose configuration with associated environment variables and container images, an upgrade involves updating the compose configuration and restarting affected containers.
+
+An upgrade can be performed using the same procedure as <<sec-proc-install>>, where Puppet will make any required changes for the upgrade and restart services and containers as necessary.
+Individual ANMS releases may identify pre-upgrade or post-upgrade steps in their specific Release Description Document (RDD).
+
+=== Resetting Docker State
+
+[WARNING]
+The following will reset all database state, including user profiles, ADM configuration, and all historical report data.
+This should only be used for test hosts or after performing a full Postgres DB backup (see <<sec-proc-db-backup>>).
+
+To force containers and volumes (containing long-term database files) to be cleared, a maintainer can run the following from the host.
+
+```
+docker stop $(docker ps -q); docker rm $(docker ps -a -q); docker volume rm $(docker volume ls -q)
+```
+
+After clearing containers and volumes, the normal `apply_local` step of <<sec-proc-install>> should be performed to re-install and start the containers.
+
+
+=== Monitoring
+
+
+To enable Wireshark logging with patched AMP dissector, run similar to the following:
+```
+wireshark -i br-anms -f 'port 1113 or port 4556' -k
+```
+
+[#sec-proc-db-backup]
+=== Long-Term Database Backup and Restore
+
+Although the docker volume `anms_postgres` contains the raw database state, this will not allow backup of or transferring that state to other hosts.
+
+To perform an online backup (keeping the database running) run the following on the host:
+```
+docker exec postgres pg_dump -Ft -d amp_core | gzip -c >~/anms-backup.tar.gz
+```
+which can the later be restored using:
+```
+gunzip -c <~/anms-backup.tar.gz | docker exec -i postgres pg_restore --clean -d amp_core
+```
+
+
+[#sec-proc-mon-docker]
+==== Docker State and Logs
+
+Because of the Docker Compose configuration described in <<sec-host-files>>, accessing docker state and logs requires running docker with a command similar to the following:
+```
+docker-compose -f /ammos/anms/docker-compose.yml -p anms [action] ...
+```
+
+The state of all containers in the ANMS project can be observed with:
+```
+docker-compose -f /ammos/anms/docker-compose.yml -p anms ps
+```
+which will report a "State" column either as "Up" for simple servcies or "Up (healthy)" for health-checked services.
+
+
+And observing logs from specific docker containers requires running a command similar to:
+```
+docker-compose -f /ammos/anms/docker-compose.yml -p anms logs [service-name]
+```
+
+
+[#sec-proc-mon-selinux]
+==== SELinux Audit Events
+
+The procedures in this section are a summary of more detail provided in Chapter 5 of the RedHat <<rhel8-selinux>> document.
+
+By default, the `setroubleshootd` service is running, which intercepts SELinux audit events
+
+To observe the system audit log in a formatted way run:
+----
+sudo sealert -l '*'
+----
+
+Some SELinux denials are marked as "don't audit" which suppresses normal audit logging when they occur.
+They are often associated with network access requests which would flood an audit log if they happen often and repeatedly.
+To enable logging of `dontaudit` events run:
+----
+sudo semanage dontaudit off
+----
+
+
+=== Checkout Procedures
+
+Each of the following checkout procedures makes progressively more detailed and more normal-operations-like tests of the external interfaces with the ANMS.
+
+In many fault cases, the procedure will work for the first steps and then fail on a specific step and thereafter.
+This is taken advantage of for the purposes of troubleshooting and failure reporting; the specific procedure(s) run and step(s) that fail are valuable to include in issue reports related to the ANMS.
+
+To make the procedures more readable, the ANMS host is assumed to have the resolveable host name `anms-serv`.
+For checkout steps ocurring on a "client host" it is assumed to be running RHEL-8 or equivalent from the perspective of commands available.
+
+
+[#sec-checkout-frontend]
+==== Frontend Communication
+
+This procedure checks the mechanism that a user agent can communicate with the ANMS just as a browser or user application would.
+
+The checkout procedure is as follows:
+
+. From the ANMS host verify firewall access with:
++
+----
+sudo firewall-cmd --zone public --list-services
+----
+which should include the servies "https".
+. From a client host check the port is open with:
++
+----
+nmap anms-serv -p80,443
+----
++
+which should show a result similar to
++
+----
+PORT    STATE  SERVICE
+80/tcp  closed http
+443/tcp open   https
+----
+. From a client host check HTTP access with:
++
+----
+curl --head https://anms-serv/
+----
++
+which should show a result containing lines similar to
++
+----
+HTTP/1.1 302 Found
+Server: Apache/2.4.37 (Red Hat Enterprise Linux) OpenSSL/1.1.1k
+Location: /authn/login.html
+----
+. From a client host check a test login account with:
++
+----
+curl --head --user test https://anms-serv/
+----
++
+along with the credentials for that account, which should show a result containing lines similar to
++
+----
+HTTP/1.1 302 Found
+Server: Apache/2.4.37 (Red Hat Enterprise Linux) OpenSSL/1.1.1k
+Location: /authn/login.html
+----
+
+
+[#sec-checkout-bpa]
+==== BP Agent Communication
+
+This procedure checks whether the BPA in the ANMS can communicate with the BPA of a specific managed device.
+
+The checkout procedure is as follows:
+
+. From the ANMS host verify firewall access with:
++
+----
+sudo firewall-cmd --zone public --list-services
+----
+which should include the servies "ltp" and "dtn-bundle-udp".
+. From any RHEL-8 host on the agent network run the following:
++
+----
+sudo nmap anms-serv -sU -p4556
+----
++
+which should show a result similar to
++
+----
+PORT     STATE    SERVICE
+4556/udp filtered dtn-bundle-udp
+----
+. From the ANMS host run the following, substituting the host name/address of any valid BP Agent:
++
+----
+sudo nmap amp-agent -sU -p4556
+----
++
+which should show a result similar to
++
+----
+PORT     STATE    SERVICE
+4556/udp filtered dtn-bundle-udp
+----
+. From the ANMS host run the following:
++
+----
+docker exec ion-manager ion_ping_peers 1 2 3
+----
+
+== Troubleshooting
+
+=== Puppet
+
+[qanda]
+Errors related to the SELinux modules for the ANMS containers during installation of the ANMS on the local host, as discussed in <<sec-proc-install>>::
+Add the following line to the Puppet common.yaml file, typically found at `+puppet/data/common.yaml+`.
+----
+selinux::mode: permissive
+----
+
+
+
+
+
+[bibliography]
+== References
+[bibliography]
+* [[[anms-user-guide,ANMS User Guide]]] "Asynchronous Network Management System User Guide," JHU/APL
+* [[[puppet-agent]]] Puppet, "Installing Puppet," 2023. Available at https://www.puppet.com/docs/puppet/7/install_puppet.html
+* [[[puppet-bolt]]] Puppet, "Installing Bolt," 2023. Available at https://www.puppet.com/docs/bolt/latest/bolt_installing.html#install-bolt-on-rhel
+* [[[rhel8-selinux,Using SELinux]]] RedHat, "Using SELinux", 7 Feb 2023. Available at https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/pdf/using_selinux/red_hat_enterprise_linux-8-using_selinux-en-us.pdf
+
+[index]
+== Index

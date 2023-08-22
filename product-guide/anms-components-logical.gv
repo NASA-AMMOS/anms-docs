@@ -1,0 +1,52 @@
+digraph AMMOS {
+  node [shape=box,style=filled];
+
+  subgraph cluster_ANMS {
+    label="ANMS Instance";
+    labeljust=r;
+
+    authnz [label="CAM Gateway" group=main];
+    authnz -> nginx [label="HTTP"];
+    
+    nginx [group=main];
+    anms_core [label="anms-core" group=main];
+    transcoder [label="Transcoder"];
+    aricodec [label="ARI CODEC"];
+    amp_manager [label="AMP Manager"];
+    
+    nginx -> anms_core [label="REST"];
+    anms_core -> dw [label="SQL"];
+    anms_core -> amp_manager [label="AMP"];
+    anms_core -> transcoder -> aricodec [label="MQTT"];
+
+    grafana [label="Grafana"];
+    nginx -> grafana [label="HTTP"];
+
+    diagnostic [label="Diagnostic Tools"];
+    nginx -> diagnostic [label="HTTP"];
+
+    dw [label="Data warehouse"];
+    amp_manager -> dw [label="SQL"];
+    grafana -> dw [label="SQL"];
+  }
+
+  subgraph cluster_infra {
+    label="AMMOS Infrastructure";
+    labeljust=r;
+
+    cam_server [label="CAM Server"];
+  }
+  authnz -> cam_server [style=dashed];
+
+  user [label="User Agent [0..*]"];
+  user -> authnz [label="HTTP"];
+
+  subgraph cluster_agents {
+    label="Managed Device [0..*]";
+    labeljust=r;
+    style=filled;
+
+    amp_agent [label="AMP Agent"];
+    amp_manager -> amp_agent [label="AMP"];
+  }
+}

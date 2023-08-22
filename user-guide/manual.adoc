@@ -1,0 +1,1070 @@
+////
+Copyright (c) ${years} The Johns Hopkins University Applied Physics
+Laboratory LLC.
+
+This file is part of the Asynchronous Network Management System (ANMS).
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+This work was performed for the Jet Propulsion Laboratory, California
+Institute of Technology, sponsored by the United States Government under
+the prime contract 80NM0018D0004 between the Caltech and NASA under
+subcontract 1658085.
+////
+= Asynchronous Network Management System (ANMS) User Guide
+:doctype: book
+:backend: docbook5
+:docinfo: shared
+:toc:
+
+
+[preface]
+== Introduction
+
+This User Guide provides an overview of the user interface (UI) and high-level workflows of the Asynchronous Network Management System (ANMS), which is part of the Advanced Multi Mission Operations System (AMMOS) suite of tools.
+
+=== Identification
+
+[%header,width=75%,cols=2*]
+|===
+|Property
+|Value
+
+|Configuration ID (CI)
+|631.17
+
+|Element
+|Multi-Mission Control System (MMCS)
+
+|Program Set
+|Asynchronous Network Management System (ANMS)
+
+|Version
+|1.0
+|===
+
+=== Scope
+
+This document describes the user interface and workflows of the ANMS.
+For technical details about the ANMS architecture, installation, upgrade, monitoring, and maintenance see the <<anms-product-guide>>.
+
+[glossary]
+=== Terminology
+
+[glossary]
+Abbreviations::
+Asynchronous Management Protocol (AMP):::
+The application protocol used to communicate between ANMS and its managed agents.
+Application Data Model (ADM):::
+The definition of a collection of objects in an AMP agent. Each agent can support any number of ADMs but only one version of each ADM.
+Operational Data Model (ODM):::
+The collection of objects defined by an Agent during its runtime which are _not_ defined in an ADM.
+Asynchronous Resource Identifier (ARI):::
+A text identifier for any object in the ADM or ODM of an Agent. This is used to command an Agent and to identify reported data from an Agent.
+Roles and Subsystems::
+More details on these topics can be found in the <<anms-product-guide>>.
+User:::
+The human accessing the ANMS via a web browser or a machine accessing via a "northbound" API.
+Administrator:::
+A user having an account marked as a special role with extra access to the ANMS for monitoring and troubleshooting.
+Manager:::
+A subsystem of the ANMS which sends commands to and receives reports from all defined Agents.
+Agent:::
+A device being managed by the ANMS, but separate from the ANMS itself.
+All agents must be accessible via some network, but not necessarily an IP network.
+UI Terminology::
+Link:::
+A browsable item within a web page which accesses a specific item on the same page or a different page.
+Redirect:::
+An automatic change in the current web page caused by some action on the current page.
+Select:::
+A user input via a Web Browser to either click with a mouse or keyboard.
+Choose:::
+Selecting an item from a drop-down list of available options.
+
+
+== User Interface
+
+The following section provides an overview of the ANMS User Interface, organized by the capabilities provided by each of the tabs - Monitor, Agents, Build, Status, ADMs - shown at the top of the ANMS display. 
+
+
+=== User Accounts and Login/Logout
+
+The first thing that must happen before a user can access the ANMS is to log-in with an authorized user account.
+The Common Access Manager (CAM) controls authentication, authorization, and auditing (AAA) functions for the ANMS (and other AMMOS tools) so any account creation or maintenance must be done in either CAM or its Active Directory user database.
+
+After a user has successfully logged-in the current account name is displayed in the top ribbon of each ANMS page as in <<fig-top-ribbon>>.
+The leftmost side of the ribbon contains the ANMS name and version identifier.
+The rightmost side contains the account name and link, along with a "Logout" link.
+
+[#fig-top-ribbon]
+.Top Ribbon Example
+image::images/top-ribbon.png[]
+
+Selecting the user account link will show the user's profile page, as described in <<sec-user-profile>>.
+Selecting the Logout link will immediately cause the login session to be ended and the browser will redirect back to the login page.
+
+[#sec-user-profile]
+==== User Profile Page
+
+This page includes parameters associated only with a user account, rather than any particular managed Agent or ADM. These parameters include:
+* Username
+* Email
+* First Name
+* Last Name
+* Membership Length
+
+[#fig-user-profile]
+.User Profile Example
+image::images/user-profile.png[]
+
+The Email, First Name, and Last Name fields can be edited on this page. Clicking the green `Update` button will update the user profile with these changes.
+
+
+[#sec-monitoring]
+=== Monitoring 
+
+The *Monitor* tab uses Grafana to display data stored in the ANMS databases, which are populated with information collected from the Managers and Agents in the network.
+
+There are four default displays that are populated at the top of the Monitor tab, in addition to the option to build custom graphs and visualizations of the information monitored by the ANMS. 
+
+NOTE: Based on your network configuration and if you have previously authenticated to Grafana, the browser may present a login window (either a pop-up or a menu that drops from the top of the window, based on your browser). This is the Nginx server proxying authentication to Grafana. This ensures that the Grafana panels do not render to anonymous users.
+
+
+==== Default Panels
+
+===== Message Groups per Minute
+
+[#fig-msg-groups-per-min]
+.Message Groups per Minute Sample Display
+image::images/msg-groups-per-min.png[]
+
+The _Message Groups per Minute_ visualization in the top right of the Monitor tab displays the rate of messages generated by Agents and stored in the database by the Manager.
+
+===== Received Reports
+
+The first table on the Monitor tab displays information from all reports the Manager has received and stored. The values in this table are organized by type; the report template needs to be used to decode the report entry values.
+
+The report entries are populated with:
+* Time the report was received
+* ID of the Agent that generated the report
+* Report name
+* ADM defining the report template used (if applicable)
+* Values included in the received report
+
+[#fig-received-reports]
+.Received Reports Sample Table
+image::images/received-reports.png[]
+
+===== ARIs
+
+The second table on the Monitor tab displays all of the ARIs stored in the database. These resource identifiers are useful in showing the messages that can be built and sent to an Agent.
+
+The ARI table entries include:
+* The object metadata ID
+* Data type ID
+* Object name
+* Namespace ID
+* ADM name
+* ADM enumeration
+* ADM enumeration label
+* Description of the ARI
+
+[#fig-ari-table]
+.ARI Sample Table
+image::images/ari-table.png[]
+
+[#sec-creating-custom-panels]
+==== Creating Custom Panels
+
+The Grafana display at the bottom of the *Monitor* tab allows a user to create custom panels - graphs, charts, alerts, etc. - to visualize information gathered by the ANMS that is stored in the database. 
+
+Navigate to the `Monitor` tab, and select `New Panel` under the Grafana section. 
+
+[#fig-new-panel]
+.Create a Custom Panel for Monitoring
+image::images/new-panel.png[]
+
+A new page is then displayed; this is the Grafana's panel creation wizard.
+
+There are three sections in the panel creator, which can be resized for easy viewing and 
+editing.
+
+[#fig-panel-creator]
+.Grafana Panel Creation Wizard
+image::images/panel-creator.png[]
+
+*Section A*, as depicted in <<fig-panel-creator>> in the upper left box, displays a preview of what the panel you are creating will look like or 
+will show an error screen if it can not be generated.
+
+[#fig-panel-data]
+.Sample Panel Data Selection from the amp-core Database
+image::images/panel-data.png[]
+
+
+*Section B*, in the bottom left of <<fig-panel-creator>>, is where you select the data you would like to display in your custom panel. 
+It is best to resize this section to easily set up the data you would like to view. 
+
+Under `data source`, you can select which database to use. `amp_core` is a PostgreSQL database for ANMS that contains health and status for the 
+ANMS system and stores the information generated and used by the AMP network manager. The `amp-core` database is selected in the sample query 
+provided in <<fig-panel-data>>.
+
+*Section C*, on the right side of <<fig-panel-creator>>, provides the settings for the panel. You can edit the title of the graph, the type of 
+graph, and other attributes.
+
+To build out a Grafana panel, select the `amp_core` database to display data from the manager. Then, choose the table or view from the database 
+that you wish to display. 
+
+NOTE: Not every table has a timestamp entry, so you might need to change the type of graph you are attempting to use if data is not displaying as expected. You can change the type of graph you would like to use in Section C. 
+
+Next, select the columns you would like to use. The `Generate SQL` option may be useful to you if you are familiar with SQL.
+
+Once the data for the panel is selected, you can preview the graph in Section A. 
+
+The `Query Inspector` button will display the results of the SQL query and is useful for debugging if the panel is not displaying correctly.
+
+Additional information on the use of Grafana to build panels can be found in the detailed documentation available online <<grafana-docs>>, including a tutorial on building a <<grafana-dashboard>> and instructions on how to customize <<grafana-panels>>.
+
+[#sec-agents]
+=== Agents
+
+The *Agents* tab can be used to search for Agents known to the ANMS, get additional information on these Agents, and add new Agents to the system.
+
+The search bar at the top of the page allows a user to search the Agents known to the ANMS by:
+
+* ID String (Example: ipn:1.1)
+* Time Agent was First Registered (Example: 2023-02-16T19:44:20.805658)
+* Time Agent was Last Registered (Example: 2023-03-20T17:13:41.284906)
+
+[#fig-agent-search]
+.Search for Agents Known to the ANMS
+image::images/agent-search.png[]
+
+The table in the middle of the Agents page displays the Agents registered with the ANMS, giving the Agent ID String and the times that agent was first and last registered. 
+
+For additional information on a specific Agent, click a row in the table. The Agent details are displayed, including:
+
+* Registered Agent ID
+* Agent ID String
+* Time Agent was First Registered
+* Time Agent was Last Registered
+
+[#fig-agent-details]
+.Detailed Agent Information Provided by the ANMS
+image::images/agent-details.png[]
+
+The first dropdown, labeled "Select Sent Reports" provides a list of reports that an Agent has sent. 
+
+[#fig-agent-reports-sent]
+.The Agent Sent Reports Dropdown Menu
+image::images/agent-reports-sent.png[]
+
+Select a report from the list for additional data.
+
+[#fig-agent-select-sent-report]
+.Selecting a Report Sent by the Agent
+image::images/agent-select-sent-report.png[]
+
+[#fig-agent-report-print]
+.Displaying a Report
+image::images/agent-report-print-example.png[]
+
+The second dropdown menu allows the user to build a command to send to the currently selected Agent. 
+The `Select Operation` dropdown can be used to select the operation for the command, and the text box to the right accepts any parameters, 
+as a comma separated list, necessary for that command. 
+Click the `Send Parameter` button to send the control to the agent. 
+
+[#fig-agent-operation]
+.Select an Operation and Parameter to Build a Control to Send to the Agent
+image::images/agent-operation.png[]
+
+Adding an Agent to the ANMS can be done from the Agents page as well. Enter the Address of the Agent to add to the ANMS, and select the `Add Node` button.
+
+[#fig-agent-add]
+.Add an Agent to the ANMS
+image::images/agent-add.png[]
+
+To manage an Agent, enter the address(es) of the Agent(s), using a comma separated list of addresses if multiple Agents are to be managed at once. 
+Click the `Manage agent` button when this field has been populated to pull up a menu displaying Agent management options. 
+
+[#fig-agent-manage]
+.Manage an Agent 
+image::images/agent-manage.png[]
+
+From this Agent management menu, the user can:
+1. De-register the Agent.
+2. Send a Time Based Rule (TBR). 
+3. Send a raw command (in hex).
+4. Print the reports generated by the Agent.
+5. Write the reports generated by the Agent to a file (feature not currently supported).
+
+[#fig-agent-manage-menu]
+.The Agent Management Menu
+image::images/agent-manage-menu.png[]
+
+=== Build
+
+[#fig-build-tab]
+.Select the Build Tab of the ANMS
+image::images/build-tab.png[]
+
+The *Build* tab is for used for generating ARIs, translating string ARIs to CBOR, and sending those ARIs to the ANMS database and/or Agent(s). All ARIs in the ANMS database can be used to generate new string ARIs using the `ARI Builder` that can be translated using the `ARI String Input` option. To switch between building and translating ARIs, use the toggle at the center of the screen beneath the menu bar.
+
+When first navigating to this tab, the ANMS compiles all known ARIs, including their parameter information, from the database. 
+
+==== ARI String Input
+
+[#fig-string-input]
+.ARI String Input Toggle
+image::images/string-input.png[]
+
+The ANMS transcodes string ARIs to CBOR, which can then be sent to Agents. To perform this translation, toggle the switch at the top of the screen to select the ARI *String Input* option. 
+
+[#fig-ari-string-transcode]
+.ARI String Transcoder
+image::images/ari-string-transcode.png[]
+
+In the top input box, enter a string ARI (Ex: "ari:/IANA:bp_agent/EDD.endpoint_names") and select the `SUBMIT` button to transcode the given ARI. The CBOR generated by the ANMS will be populated in the table below the input options on the page, as shown in <<fig-transcoded-aris>>.
+
+[#fig-ari-search]
+.Search Transcoded ARIs
+image::images/ari-search.png[]
+
+To search the ARIs that have been transcoded by the ANMS, enter one of the following:
+1. Transcoder Log ID
+2. String ARI (URI)
+3. CBOR 
+
+[#fig-transcoded-aris]
+.Transcoded ARIs with String and CBOR Versions Shown
+image::images/transcoded-aris.png[]
+
+The transcoded ARIs are presented in the table at the bottom of the Build tab. The table provides the Transcoder Log ID, String form of the ARI, a description of what the provided string was parsed as (currently, all string input is parsed as a URI), the CBOR translation for the ARI, the URI, and details on transcoding errors if an issue with the input was detected. 
+
+==== ARI Builder
+
+[#fig-ari-builder-toggle]
+.ARI Builder Toggle
+image::images/ari-builder-toggle.png[]
+
+The ANMS allows a user to build ARIs from existing ADMs. To begin building an ARI, type in the search bar as shown in <<fig-ari-build-search>> to filter available ARIs by type, ADM, or name. 
+
+[#fig-ari-build-search]
+.ARI Search Bar
+image::images/ari-build-search.png[]
+
+The user may also choose an ARI from the drop down list, as shown in <<fig-ari-search-dropdown>>.
+
+[#fig-ari-search-dropdown]
+.Search Available ARIs 
+image::images/ari-search-dropdown.png[]
+
+If the chosen ARI has parameters, input boxes will be provided for each required field. The parameters will be displayed as a comma separated list after the name of the ARI.
+
+[#fig-simple-ari-param]
+.ARI Parameter Input
+image::images/simple-ari-param.png[]
+
+ARIs with complex parameters include additional guidance for populating these required fields. For instance, an ARI Collection (AC) builder is provided for ARIs requiring an AC parameter, as shown in <<fig-ari-parms>>. The left side of the screen allows a user to search for the ARI they want to add to the AC and the right-hand side of the screen displays the selected ARI(s). 
+
+[#fig-ari-params]
+.Sample ARI with an AC Parameter
+image::images/ari-params.png[]
+
+ARI parameters can be searched and selected from a dropdown menu, similar to the search to initiate the ARI build process.
+
+[#fig-ari-param-dropdown]
+.Selecting an ARI Parameter
+image::images/ari-param-dropdown.png[]
+
+When an ARI is selected from the search box on the left, it is populated in the box on the right, `Current ARIs`. When all parameters have been added to the `Current ARIs` box, select the blue `Create AC` button to finalize the list of parameters and generate the collection. 
+
+[#fig-ari-param-in-ac]
+.ARI Parameter Added to an AC
+image::images/ari-param-in-ac.png[]
+
+When the AC has been generated, the `Create AC` button switches from blue to gray. The AC is displayed below the button, as pictured in <<fig-sample-ac>>.
+
+[#fig-sample-ac]
+.Generated AC
+image::images/sample-ac.png[]
+
+For parameters that also require parameters, the system will generate additional input fields after the user clicks the `Create AC` button.
+
+When the AC for the ARI has been completed, click the `Submit AC` button to send it to be converted.
+
+[#fig-string-uri]
+.Sample String URI for the Delete Plan Control ARI
+image::images/string-uri.png[]
+
+After all ARI parameters have been filled in and the user submits the ARI, the system will generate the new string URI that is shown beneath the ARI search bar. This string URI is sent via anms-core to the transcoder to be translated. The final result of the translation is displayed in the table at the bottom of the page, as depicted in <<fig-completed-ari-build>>. 
+
+[#fig-pending-ari-build]
+.ARI in "pending" State
+image::images/pending-ari-build.png[]
+
+NOTE: An ARI that is currently being translated by the ANMS will be marked as "pending" in the `Parsed As` field of the transcoded ARI table, as pictured in <<fig-pending-ari-build>>. When the ARI translation is complete, the `Parsed As` field will be updated to show the provided format of the ARI. 
+
+[#fig-completed-ari-build]
+.Translated ARI with Input String and CBOR Output
+image::images/completed-ari-build.png[]
+
+The transcoded ARI table provides the following information:
+
+.Transcoded ARI Table Contents
+|===
+|Column Label | Description | Type | Sample Value | Notes  
+
+| Transcoder Log ID 
+| The ID of the transaction.
+| UINT
+| 10
+| Used primarily for debugging purposes.
+
+| Input String
+| The user input sent to the Transcoder.
+| String
+| ari:/IANA:ion_ltp_admin/EDD.ion_version
+| The URI string shown below the search bar on the ARI Build tab.
+
+| Parsed As
+| The determined format of the Input String.
+| STR
+| URI
+| Set to "pending" while transcoding is in progress. Set to "URI" if provided input is successfully parsed as a URI.
+
+
+| CBOR
+| The CBOR generated from the Input String.
+| Hex
+| 0x8218B64100
+| Agent-parsable ARI.
+
+| Ari
+| Details regarding ARI parsing from the transcoder. 
+| STR
+| "Failed to process: Error decoding from `ari:/IANA:amp_agent/CTRL.gen_rpts([],[{type:STR,name:,value:ipn:1.6}])`: Failed to parse \"ari:/IANA:amp_agent/CTRL.gen_rpts([],[{type:STR,name:,value:ipn:1.6}])\": Syntax error in input at: LexToken(NAME,'type:STR',1,39)"
+| Set to "{}" if transcoding was successful. 
+
+| Uri
+| The URI generated from the user input.
+| STR
+| "ari:/IANA:amp_agent/CTRL.gen_rpts([ari:/IANA:amp_agent/RPTT.full_report,ari:/IANA:bp_agent/RPTT.endpoint_report('ipn:2.6')],[])"
+| Set to "" if transcoding was unsuccessful. Consult the Ari field for further details on parsing/processing errors.
+
+|===
+
+The ANMS-generated CBOR in the table provides ARIs in the format Agents expect. To send the CBOR ARI to an Agent, click the value in the table. This will display all registered Agents. When an Agent is selected, the details for that Agent and the option to send a CBOR ARI is provided. This process is discussed in detail in <<sec-agents>>.
+
+
+=== Status
+
+[#fig-status-tab]
+.Selecting the Status Tab with System Health Indicated as Good
+image::images/status-tab.png[]
+
+The Status page provides a summary of the overall health and status of the ANMS services. If all ANMS containers are up and running, a green "Good" label is included in the Status tab header. Selecting the Status page provides a list of the ANMS services and their individual statuses. All statuses will be set to "running" and displayed in green to indicate that the overall health of the ANMS system is good.
+
+Select the "Check Service Status" button to refresh the health and status data displayed for the ANMS services.
+
+[#fig-status]
+.ANMS Status
+image::images/status.png[]
+
+
+=== ADMs
+
+[#fig-adms-tab]
+.Selecting the ADMs Tab
+image::images/adms-tab.png[]
+
+The ADMs page of the ANMS displays the Application Data Models (ADMs) known to the system, and allows a user to upload additional ADM files. 
+
+==== Displaying Supported ADMs
+
+Selecting the "Get ADMs" button, a user can refresh the table of supported ADMs. The table displays the enumeration, ADM name, Namespace, version, and description associated with each ADM.
+
+[#fig-adms-table]
+.Supported ADMs
+image::images/adms-table.png[]
+
+== Downlaoding ADMs
+
+Selecting an ADM's name will download the associated JSON file.
+
+[#fig-adm-download]
+.Downlaoding ADM
+image::images/adms-download.png[]
+
+
+==== Adding ADMs 
+
+The file selection option at the bottom of the ADMs page allows a user to add an ADM to the ANMS.
+Selecting the "Browse" button, the user can select any JSON ADM file from their local filesystem. Selecting the blue "Upload adm json" button will upload the file and the ADM information is populated in the table above. 
+
+[#fig-add-adm]
+.Add an ADM by Uploading a JSON file
+image::images/add-adm.png[]
+
+If the new ADM is not displayed in the table, it may be necessary to click the "Get ADMs" button to refresh the table contents.
+
+
+
+== Workflows
+
+The workflows presented in the following sections provide examples of common ANMS use cases and a walkthrough of the steps taken to produce the described results.
+
+
+=== Display Data with a Custom Grafana Panel
+
+The *Monitor* tab of the ANMS allows a user to construct custom panels for data visualization using Grafana, as discussed in <<sec-creating-custom-panels>>. 
+This sample workflow shows the construction of a custom panel to view a report variable for an AMP agent, 
+but can be modified to plot any data points of interest within the ANMS UI.
+
+In this example, the user wants to know the number of times a time-based rule is executed at a particular agent. 
+This can be achieved using Graphana to plot the `TBR_RUN` EDD contained in the AMP Agent reports collected by the Manager. 
+
+Grafana uses SQL queries to pull data from the ANMS database and display it to the user. 
+
+The code block below is an SQL query that will retrieve all report information in the ANMS database. 
+This is the starting point for plotting any information from reports received by the Manager. 
+This query is the same as the one used to generate the _Received Reports_ Grafana panel in the ANMS UI's default configuration. 
+
+.SQL Query for All Report Information
+[source,sql]
+----
+-- all reports 
+SELECT 
+  time,
+  "Agent ID",
+  "Report Name",
+  "ADM",
+  "Report ID",
+  "String Values",
+  "UINT Values",
+  "INT Values",
+  "REAL32 Values",
+  "REAL64 Values",
+  "UVAST Values",
+  "VAST Values",
+  "Object ID Values",
+  "AC ID Values",
+  "TNVC ID Values"
+FROM
+  vw_rpt_entries
+----
+
+To plot a specific variable from a specific report type, incorporate an SQL `WHERE` block to filter `Report Name` and `ADM`. The `Report Name` and `ADM` variables are defined in an agent's ADM and are viewable in the `ARI` table. 
+
+In the example below, in order to retrieve the `TBR_RUN` information, which is stored in the `amp_agent.full_report`, we add the final `where` clause which sets the `Report Name` to `full_report` and the `ADM` to `amp_agent`. This gives us the correct report data. 
+
+Within the `amp_agent.full_report`, by looking at the report template in the ADM, we can determine that the `TBR_RUN` data point is the *fifth* `UINT` entry in the report. Using this information, we can `SELECT` the fifth entry in the `UINT Values` to retrieve the `TBR_RUN` data. The entries are separated by commas, so we use the `substring_index` command to extract individual entries. Finally, we cast the value to the proper type. Now the query <<sql-tbr-query>> can be executed to extract the data needed to generate a Grafana graph.
+
+[#sql-tbr-query]
+.SQL Query for Number of Time-Based Rules Run by an Agent
+[source,sql]
+----
+SELECT 
+    time as "time",
+    "Agent ID" as metric,
+    -- agent_id_string as metric,
+    cast(split_part(split_part("UINT Values", ',', 5),
+            ',',
+            - 1) as integer)
+FROM
+    vw_rpt_entries
+WHERE 
+    "Report Name" = 'full_report' AND "ADM" = 'amp_agent'
+----
+
+To use this SQL query and extract the relevant data, toggle Grafana to text-edit mode, then insert the SQL. 
+
+[#fig-text-edit]
+.Toggle for Text-Edit Mode in Grafana
+image::images/text-edit.png[]
+
+After inserting the formatted query, a sample visualization will be displayed. 
+
+[#fig-sample-tbr-results]
+.Sample Time-Based Rule Execution Visualization
+image::images/sample-tbr-results.png[]
+
+After setting final options, such as graph title, the panel is ready to be saved and viewed on the Monitor tab.  
+
+[#fig-tbr-panel]
+.Time-Based Rule Panel Displayed on Monitor Tab
+image::images/tbr-panel.png[]
+
+In this sample panel, the number of time-based rules executed by each registered Agent is plotted over the period of time the Manager has been receiving data.
+To refine the timeframe the data is shown for, edit the SQL query to include a condition in the `WHERE` block. 
+
+
+=== Receiving Agent Data
+
+Agents in the ANMS can be configured to monitor applications and services. The data they produce can be requested by a Manager as a report or 
+table, depending on the associated data template, and viewed either on the `Agents` tab of the ANMS, or used to produce custom Grafana 
+visualizations on the `Monitor` tab.
+
+
+==== Generate a Report
+
+To generate a report, the AMP Agent `gen_rpts` control is used. This control accepts two parameters:
+1. An ARI Collection (AC) specifying the report template(s) (RPTTs) that should be populated by the Agent.
+2. A Type-Name-Value Collection (TNVC) identifying the Manager(s) that are the intended recipients of the report(s).
+
+First, navigate to the `Build` tab of the ANMS and toggle the switch at the top to use the ARI Builder. In the ARI search box, find the 
+AMP Agent `gen_rpts` control.
+`ari:/IANA:amp_agent/CTRL.gen_rpts(AC, TNVC)`
+
+[#fig-gen-rpt-search]
+.Generate Report ARI
+image::images/gen-rpt-search.png[]
+
+Next, the parameters for the control must be chosen. Select the report templates (RPTTs) to be populated by the Agent and add them to the AC. 
+
+[#fig-rptt-search]
+.Search for RPTTs to Add to the AC
+image::images/rptt-search.png[]
+
+For this sample workflow, the AMP Agent Full Report and BP Agent Endpoint Report templates have been selected.
+
+[#fig-rptt-selected]
+.Full Report and Endpoint Report Selected for AC
+image::images/rptt-selected.png[]
+
+Click `Create AC ` to generate the AC and additional parameter fields as needed. The AMP Agent Full Report does not require any parameters, 
+but the BP Agent Endpoint Report requires a string identifying the endpoint(s) for which the report should be generated for. 
+This input option is generated when the user selects `Create AC`, as shown in <<fig-endpoint-pol-parm>>.
+
+[#fig-endpoint-pol-parm]
+.Endpoint Report Parameter
+image::images/endpoint-pol-parm.png[]
+
+Enter the desired endpoint - in the case of this example, "ipn:2.6" is used - and select the blue `SUBMIT for endpoint_report` button to submit the parameter. 
+Doing so will update the AC above to include the parameter value, as seen in <<fig-updated-ac>>.
+
+[#fig-endpoint-parm-popuated]
+.Endpoint Report Parameter "ipn:2.6"
+image::images/endpoint-parm-populated.png[]
+
+[#fig-updated-ac]
+.AC Updated with Endpoint Report Parameter "ipn:2.6"
+image::images/updated-ac.png[]
+
+After submitting the parameters for each ARI in the AC, click the `Submit AC` button to finalize and send the AC to be converted. 
+
+NOTE: The `Submit AC` button is not available to select until all entries' parameters have been submitted. 
+
+The second parameter for the `gen_rpts` control is a type-name-value collection: rxmgrs. This parameter specifies the Manager(s) 
+that will receive the generated report(s). 
+This is not a required parameter. By default, the reports generated by this control will be sent to the Manager that issued the 
+control. If this default option is desired, leave these fields blank.  
+
+[#fig-rxmgrs-tnvc]
+.Optional Receiving Managers Parameter
+image::images/rxmgrs-tnvc.png[]
+
+Now that all the parameters are filled out, select the `SUBMIT for gen_rpts` button which will generate the string ARI. This string ARI is sent to the 
+transcoder and will be available in the lower table after it has ben processed.
+
+*Resulting String ARI:* `ari:/IANA:amp_agent/CTRL.gen_rpts([ari:/IANA:amp_agent/RPTT.full_report,ari:/IANA:bp_agent/RPTT.endpoint_report('ipn:2.6')],[])`
+*CBOR:* `0xC115410505022523828718194100C7182D41010501274769706E3A322E3600`
+
+[#fig-transcoded-rpt-ari]
+.Generate Report ARI and CBOR Representations
+image::images/transcoded-rpt-ari.png[]
+
+Now that the control has been built, the CBOR can be sent to the desired Agent(s). Click the CBOR entry for the translated ARI and 
+the UI will redirect to the `Agents` tab.
+
+At the bottom of the page, fill in the address of the Agent (or a comma separated list if providing multiple Agents) to send the 
+control to. In <<fig-managed-agent>>, the Agent address is ipn:2.6.
+
+[#fig-managed-agent]
+.Manage Agent ipn:2.6
+image::images/managed-agent.png[]
+
+Select the `Manage agent` button to open a menu of options for Agent handling. The input box for a `RAW Command` will be auto-filled 
+with the CBOR selected from the *Build* tab. Select the `Send Raw Command` button to send the CBOR command to the Agent.
+
+[#fig-raw-cmd]
+.Auto-filled CBOR in RAW Command Field
+image::images/raw-cmd.png[]
+
+After successfully sending the control to the Agent, the CBOR is shown as the *Last Command Sent* and an HTTP Status code is displayed below
+the Manage Agent button. Expected status is `200 OK` indicating that the command was sent.
+
+[#fig-cmd-success]
+.Command Sent Successfully
+image::images/cmd-success.png[]
+
+==== View Report Data
+
+To view reports generated by an agent, navigate to the bottom of the *Agents* tab. Fill in the address of the Agent to retrieve the report
+data from. Select the `Manage agent` button to open a menu of options for Agent handling. 
+
+[#fig-print-rpt]
+.Print Report Option
+image::images/print-rpt.png[]
+
+Select `Print Agent Reports` to retrieve the Agent reports and display the JSON report output on the page. 
+
+[#fig-rpts-readout]
+.Sample Report Output
+image::images/rpts-readout.png[]
+
+
+==== Generate a Tabular Report
+
+To generate a tabular report, the AMP Agent `gen_tbls` control is used. This control accepts two parameters:
+1. An ARI Collection (AC) specifying the tabular report template(s) (TBLTs) that should be populated by the Agent.
+2. A Type-Name-Value Collection (TNVC) identifying the Manager(s) that are the intended recipients of the tabular report(s).
+
+First, navigate to the `Build` tab of the ANMS and toggle the switch at the top to use the ARI Builder. In the ARI search box, find the 
+AMP Agent `gen_tbls` control.
+`ari:/IANA:amp_agent/CTRL.gen_tbls(AC, TNVC)`
+
+[#fig-gen-tbl-search]
+.Generate Tabular Report ARI
+image::images/gen-tbl-search.png[]
+
+Next, the parameters for the control must be chosen. 
+Select the tabular report templates (TBLTs) to be populated by the Agent and add them to the AC. 
+
+[#fig-tblt-search]
+.Search for TBLTs to Add to the AC
+image::images/tblt-search.png[]
+
+For this sample workflow, the AMP Agent ADM Tabular Report template is selected, 
+to determine the ADMs known to the Agent.
+
+[#fig-tblt-selected]
+.ADM Tabular Report Selected for AC
+image::images/tblt-selected.png[]
+
+Click `Create AC ` to generate the AC and additional parameter fields as needed. 
+Since the ADM Tabular Report does not require any further parameters, 
+click the `Submit AC` button to finalize and send the AC to be converted. 
+
+[#fig-tblt-ac]
+.ADM Tabular Report AC
+image::images/tblt-ac.png[]
+
+The second parameter for the `gen_tbls` control is a type-name-value collection: rxmgrs. 
+This parameter specifies the Manager(s) that will receive the generated tabular report(s). 
+This is not a required parameter. By default, the tabular reports generated by this control 
+will be sent to the Manager that issued the control. 
+If this default option is desired, leave these fields blank.  
+
+[#fig-rxmgrs-tnvc2]
+.Optional Receiving Managers Parameter
+image::images/rxmgrs-tnvc.png[]
+
+Now that all the parameters are filled out, select the `SUBMIT for gen_tbls` button 
+which will generate the string ARI. This string ARI is sent to the transcoder and will be available 
+in the lower table after it has ben processed.
+
+*Resulting String ARI:* `ari:/IANA:amp_agent/CTRL.gen_tbls([ari:/IANA:amp_agent/TBLT.adms],[])`
+*CBOR:* TODO
+
+TODO
+[#fig-transcoded-rpt-ari2]
+.Generate Report ARI and CBOR Representations
+image::images/transcoded-rpt-ari.png[]
+
+Now that the control has been built, the CBOR can be sent to the desired Agent(s). Click the CBOR entry for the translated ARI and 
+the UI will redirect to the `Agents` tab.
+
+At the bottom of the page, fill in the address of the Agent (or a comma separated list if providing multiple Agents) to send the 
+control to. In <<fig-managed-agent2>>, the Agent address is ipn:2.6.
+
+[#fig-managed-agent2]
+.Manage Agent ipn:2.6
+image::images/managed-agent.png[]
+
+Select the `Manage agent` button to open a menu of options for Agent handling. The input box for a `RAW Command` will be auto-filled 
+with the CBOR selected from the *Build* tab. Select the `Send Raw Command` button to send the CBOR command to the Agent.
+
+TODO
+[#fig-raw-cmd2]
+.Auto-filled CBOR in RAW Command Field
+image::images/raw-cmd.png[]
+
+After successfully sending the control to the Agent, the CBOR is shown as the *Last Command Sent* and an HTTP Status code is displayed below
+the Manage Agent button. Expected status is `200 OK` indicating that the command was sent.
+
+TODO
+[#fig-cmd-success2]
+.Command Sent Successfully
+image::images/cmd-success.png[]
+
+
+==== View Tabular Report Data
+
+This feature is not currently supported by the ANMS.
+
+
+=== Defining Agent Rules
+
+Agents in the ANMS can be configured to produce reports, influence managed device behavior as a reaction to a change in 
+state detected for a monitored application/service. This stimulus-response system is captured through the definition
+of rules whose stimulus indicates a change in managed device state or the passage of time.
+
+
+==== State-Based Rules
+
+A State-Based Rule (SBR) can be used to specify an action that should be executed by the Agent when a particular internal state is identified. 
+This state information may be obtained from one of the applications or services associated with the Agent. 
+
+For the purpose of this example, a SBR is created to instruct an Agent to 
+TODO
+
+Use the *Build* tab to construct the `add_sbr` ARI, which follows the form `ari:/IANA:amp_agent/CTRL.add_sbr(ARI, TV, EXPR, UVAST, UVAST, AC, STR)`.
+
+The `add_sbr` control has the following parameters:
+
+.State-Based Rule Parameters
+|===
+| Name | Type | Description | Sample Value | Notes
+
+| **Id** 
+| ARI
+| ARI Id for the SBR being defined.
+| `ari://sbr.ex`
+| The Id for this example SBR is "ex", which exists in an anonymous namespace ("ari://").
+
+| **Start**
+| TV
+| Relative start time.
+| `0`
+| Setting this parameter to the special value of `0` will command the Agent to start execution of the SBR as soon as it is received. 
+
+| **State** 
+| EXPR
+| The expression that defines the condition(s) based on some internal Agent state that must be met for the action associated with the SBR to be executed.
+| TODO
+| TODO
+
+| **Max Eval** 
+| UVAST
+| TODO
+| TODO
+| TODO
+
+| **Count**
+| UVAST
+| The total number of times the SBR can be executed. 
+| `20`
+| Setting Max Eval to the special value of `0` allows a SBR to be executed an unlimited number of times.
+
+| **Action** 
+| AC
+| The collection of commands (CTRLs/MACROs) to be executed by the Agent each time the conditions (state) for the SBR are met.
+| TODO
+| All ARIs in the AC must be either a CTRL or MACRO.
+
+| **Description** 
+| STR
+| A human-readable description of the SBR. 
+| TODO
+| Details useful to network operators may be provided in this field.
+
+|===
+
+Populate these parameters in the fields provided by the ANMS, selecting `Create AC` and `Submit AC` to build the Action AC.
+
+[#fig-sbr-parms]
+.Sample SBR Parameters
+image::images/sbr-parms.png[]
+
+After finalizing the parameters, click the `SUBMIT for add_sbr` button to send the ARI to the transcoder to be translated. 
+
+*Resulting String ARI:* TODO
+*CBOR:* TODO
+
+
+TODO: add a reference to section for issuing commands to the agent.
+
+
+
+
+
+==== Time-Based Rules
+
+
+A Time-Based Rule (TBR) can be used to instruct an Agent to send a report at a user-specified time interval. 
+
+For the purpose of this example, a TBR is created to instruct an Agent to send an AMP Agent Full Report to the local Manager every 60 
+seconds, until 100 reports have been sent. 
+
+The process is similar to generating a report command, but with a few additional parameters. 
+
+Use the *Build* tab to construct the `add_tbr` ARI, which follows the form `ari:/IANA:amp_agent/CTRL.add_tbr(ARI, TV, TV, UVAST, AC, STR)`.
+
+The `add_tbr` control has the following parameters:
+
+.Time-Based Rule Parameters
+|===
+| Name | Type | Description | Sample Value | Notes
+
+| **Id** 
+| ARI
+| ARI Id for the TBR being defined.
+| `ari://tbr.ex`
+| The Id for this example TBR is "ex", which exists in an anonymous namespace ("ari://").
+
+| **Start**
+| TV
+| Relative start time.
+| `0`
+| Setting this parameter to the special value of `0` will command the Agent to start execution of the TBR as soon as it is received. 
+
+| **Period** 
+| TV
+| The number of seconds to wait between executing the action specified by the TBR.
+| `60`
+| This TBR will run every minute according to the sample period.
+
+| **Count** 
+| UVAST
+| The total number of times the TBR can be executed. 
+| `100`
+| Setting Count to the special value of `0` allows a TBR to be executed an unlimited number of times.
+
+| **Action** 
+| AC
+| The collection of commands (CTRLs/MACROs) to be executed by the Agent each time the TBR is executed.
+| `ari:/IANA:amp_agent/CTRL.gen_rpts([ari:/IANA:amp_agent/RPTT.full_report],[])`
+| All ARIs in the AC must be either a CTRL or MACRO.
+
+| **Description** 
+| STR
+| A human-readable description of the TBR. 
+| `gen full rpt`
+| Details useful to network operators may be provided in this field.
+
+|===
+
+Populate these parameters in the fields provided by the ANMS, selecting `Create AC` and `Submit AC` to build the Action AC.
+
+[#fig-gen-full-rpt]
+.Sample TBR Parameters
+image::images/gen-full-rpt.png[]
+
+After finalizing the parameters, click the `SUBMIT for add_tbr` button to send the ARI to the transcoder to be translated. 
+
+*Resulting String ARI:* `ari:/IANA:amp_agent/CTRL.add_tbr(ari://tbr.ex,TV.0,TV.60,UVAST.100,[ari:/IANA:amp_agent/CTRL.gen_rpts([ari:/IANA:amp_agent/RPTT.full_report],[])],"gen full rpt")`
+*CBOR:* `0xC115410A05062420201625120B42657800183C186481C115410505022523818718194100006C67656E2066756C6C20727074`
+
+
+TODO: add a reference to section for issuing commands to the agent.
+
+
+
+
+== Troubleshooting
+
+The following sections provide troubleshooting guidance for the ANMS.
+
+
+=== Grafana Containers
+
+If the Grafana panels in the `Monitor` tab displays `Connection was reset` errors, the Grafana container may not have started successfully. 
+
+Restart the container with `docker-compose up grafana` (run from within the `anms/` folder). 
+
+If restarting the container does not resolve the problem, and the Grafana startup 
+contains errors related to only having read-only access to the database, permissions on 
+various files in the source code will need to be updated for Grafana to run. 
+
+For both the `docker_data/grafana_vol/` folder and the `docker_data/grafana_vol/grafana.db` 
+file, change the group to `docker` and the permissions to `777`: 
+
+```
+$ sudo chgrp docker docker_data/grafana__vol
+$ sudo chgrp docker docker_data/grafana_vol/grafana.db
+$ sudo chmod 777 docker_data/grafana_vol
+$ sudo chmod 777 docker_data/grafana_vol/grafana.db
+```
+
+After changing these permissions, run `docker-compose up grafana` again, and the Grafana
+container should start sucessfully.
+
+=== Registering an Agent 
+
+==== Agent Registration Issues on Startup
+
+If an Agent is not present in the `Agents` tab on start up, it is likely due to 
+an error in one of the ION containers and their connection to the underlying database. 
+
+To resolve the issue, restart the ION containers using `docker-compose restart n1 n2`.
+
+==== New Agent Registration Issues
+
+If registering a new Agent does not result in an update to the displayed Agents in the ANMS Agent tab, 
+check that it has been registered to the ion-manager via the nm-manager CLI. The nm-manager CLI is accessible from a terminal, 
+and this check can be done using a command such as:
+
+`docker exec -it ion-manager journalctl -f --unit ion-nm-mgr`
+
+If the results confirm that the Agent is registered but it still does not show on the Agents tab of the ANMS, there may be an 
+issue with connection between the Manager and ANMS database.
+
+This can be manually resolved by adding the Agent via the adminer DB tool that is deployed as part of the docker-compose tool at http://localhost/.
+The connection information is described in <<sec-amp-database-querying>>.
+
+
+[#sec-amp-database-querying]
+=== AMP Database Querying
+
+To see what is present in the underlying AMP database, use the adminer access point. 
+
+With ANMS running, go to `localhost:8080` and log in to the database with: 
+- System: `PostgreSQL`
+- Server: `postgres`
+- Username: `root`
+- Password: `root`
+- Database `amp_core`
+
+
+=== ANMS UI Visibility
+
+==== ANMS-UI is not visible at hostname:9030
+
+This error may indicate that the anms-ui docker is experiencing issues receiving HTTP requests.
+This is most likely related to the `host` or `bind address` specified in `anms-ui/server/shared/config.py`,
+or an environment variable that overrides this.
+
+==== ANMS-UI is not visible at hostname
+
+If http://hostname:9030 (replace hostname with the server's hostname) displays the ANMS UI, but 
+http://hostname does not render the same page, this indicates an issue with NGinx. 
+
+Check the status of NGix in the docker-compose services list. It may be necessary to restart nginx via 
+`docker-compose -f docker-compose.yml restart nginx`. 
+
+If this restart does not resolve the issue, check `nginx.conf` in the root of the ammos-anms project. 
+Ensure that `anms-ui` or `localhost` are set to port `80` and the hostname is correct.
+
+
+[bibliography]
+== References
+[bibliography]
+* [[[anms-product-guide,ANMS Product Guide]]] "Asynchronous Network Management System Product Guide," JHU/APL
+
+* [[[grafana-docs]]] https://grafana.com/docs/ 
+
+* [[[grafana-dashboard]]] https://grafana.com/docs/grafana/latest/getting-started/build-first-dashboard/
+
+* [[[grafana-panels] https://grafana.com/docs/grafana/latest/panels-visualizations/
+
+[index]
+== Index

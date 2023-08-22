@@ -1,0 +1,8 @@
+# editor files
+*~
+.#*
+
+# generated files
+build
+*/docinfo.xml
+public
