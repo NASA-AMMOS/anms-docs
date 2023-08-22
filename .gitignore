@@ -1,6 +1,8 @@
 # editor files
 *~
 .#*
+.project
+.cproject
 
 # generated files
 build
