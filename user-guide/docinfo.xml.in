@@ -1,4 +1,4 @@
-<subtitle>DOC-005540, Prepared by The Johns Hopkins Applied Physics Laboratory</subtitle>
+<subtitle>DOC-005443, Prepared by The Johns Hopkins Applied Physics Laboratory</subtitle>
 <!-- <edition>@PROJECT_VERSION@</edition> -->
 <author>
   <orgname>
@@ -12,7 +12,7 @@
 <legalnotice>
   <title>License</title>
   <simpara>
-This document is part of the Asynchronous Network Managment System (ANMS).
+This document is part of the Asynchronous Network Management System (ANMS).
   </simpara>
   <simpara>
 Licensed under the Apache License, Version 2.0 (the "License");
