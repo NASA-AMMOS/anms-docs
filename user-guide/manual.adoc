@@ -134,6 +134,12 @@ Selecting an item from a drop-down list of available options.
 |Grafana Panels Documentation[[grafana-panels]]
 |https://grafana.com/docs/grafana/latest/panels-visualizations/[grafana-panels]
 
+|ANMS Source[[anms-source]]
+|https://github.com/NASA-AMMOS/anms[anms-source]
+
+|ANMS Guide Document Source[[anms-docs]]
+|https://github.com/NASA-AMMOS/anms-docs[anms-docs]
+
 |===
 
 
@@ -1015,90 +1021,38 @@ TODO: add a reference to section for issuing commands to the agent.
 
 
 
+== Product Support
 
-== Troubleshooting
+There are two levels of support for the ANMS: troubleshooting by the administrator or user attempting to operate the ANMS, which is detailed in <<sec-troubleshooting>>, and upstream support via the ANMS public GitHub project, accessible as described in <<sec-contact>>.
+Attempts to troubleshoot should be made before submitting issue tickets to the upstream project.
 
-The following sections provide troubleshooting guidance for the ANMS.
+[#sec-troubleshooting]
+=== Troubleshooting
 
-
-=== Grafana Containers
-
-If the Grafana panels in the `Monitor` tab displays `Connection was reset` errors, the Grafana container may not have started successfully. 
-
-Restart the container with `docker-compose up grafana` (run from within the `anms/` folder). 
-
-If restarting the container does not resolve the problem, and the Grafana startup 
-contains errors related to only having read-only access to the database, permissions on 
-various files in the source code will need to be updated for Grafana to run. 
-
-For both the `docker_data/grafana_vol/` folder and the `docker_data/grafana_vol/grafana.db` 
-file, change the group to `docker` and the permissions to `777`: 
-
-```
-$ sudo chgrp docker docker_data/grafana__vol
-$ sudo chgrp docker docker_data/grafana_vol/grafana.db
-$ sudo chmod 777 docker_data/grafana_vol
-$ sudo chmod 777 docker_data/grafana_vol/grafana.db
-```
-
-After changing these permissions, run `docker-compose up grafana` again, and the Grafana
-container should start sucessfully.
-
-=== Registering an Agent 
-
-==== Agent Registration Issues on Startup
-
-If an Agent is not present in the `Agents` tab on start up, it is likely due to 
-an error in one of the ION containers and their connection to the underlying database. 
-
-To resolve the issue, restart the ION containers using `docker-compose restart n1 n2`.
-
-==== New Agent Registration Issues
-
-If registering a new Agent does not result in an update to the displayed Agents in the ANMS Agent tab, 
-check that it has been registered to the ion-manager via the nm-manager CLI. The nm-manager CLI is accessible from a terminal, 
-and this check can be done using a command such as:
-
-`docker exec -it ion-manager journalctl -f --unit ion-nm-mgr`
-
-If the results confirm that the Agent is registered but it still does not show on the Agents tab of the ANMS, there may be an 
-issue with connection between the Manager and ANMS database.
-
-This can be manually resolved by adding the Agent via the adminer DB tool that is deployed as part of the docker-compose tool at http://localhost/.
-The connection information is described in <<sec-amp-database-querying>>.
+The following situations provide troubleshooting guidance for the ANMS from the perspective of a normal or administrative user, typically operating the ANMS via a web browser.
+Each situation consists of an observed state followed by a recommended troubleshooting activity.
 
 
-[#sec-amp-database-querying]
-=== AMP Database Querying
+[qanda]
+The Grafana panels in the `Monitor` tab displays `Connection was reset` errors::
+The Grafana container may not have started successfully. Contact a system administrator to restart the component. 
 
-To see what is present in the underlying AMP database, use the adminer access point. 
+An Agent is not present in the `Agents` tab on start up::
+This is likely due to an error in one of the ION containers and their connection to the underlying database. Contact a system administrator to restart the component.
 
-With ANMS running, go to `localhost:8080` and log in to the database with: 
-- System: `PostgreSQL`
-- Server: `postgres`
-- Username: `root`
-- Password: `root`
-- Database `amp_core`
+Registering a new Agent does not result in an update to the displayed Agents in the ANMS Agent tab::
+Contact a system administrator to verify that the Agent has been registered to the Manager via CLI tools.
 
 
-=== ANMS UI Visibility
+[#sec-contact]
+=== Contacting or Contributing
 
-==== ANMS-UI is not visible at hostname:9030
+The ANMS is hosted on a GitHub repository <<anms-source>> with submodule references to several other repositories.
+There is a https://github.com/NASA-AMMOS/anms/blob/main/CONTRIBUTING.md[`CONTRIBUTING.md`] document in the ANMS repository which describes detailed procedures for submitting tickets to identify defects and suggest enhancements.
 
-This error may indicate that the anms-ui docker is experiencing issues receiving HTTP requests.
-This is most likely related to the `host` or `bind address` specified in `anms-ui/server/shared/config.py`,
-or an environment variable that overrides this.
+Separate from the source for the ANMS proper, the ANMS Product Guide and User Guide are hosted on a GitHub repository <<anms-docs>>, with its own https://github.com/NASA-AMMOS/anms-docs/blob/main/CONTRIBUTING.md[`CONTRIBUTING.md`] document for submitting tickets about either the Product Guide or User Guide.
 
-==== ANMS-UI is not visible at hostname
-
-If http://hostname:9030 (replace hostname with the server's hostname) displays the ANMS UI, but 
-http://hostname does not render the same page, this indicates an issue with NGinx. 
-
-Check the status of NGix in the docker-compose services list. It may be necessary to restart nginx via 
-`docker-compose -f docker-compose.yml restart nginx`. 
-
-If this restart does not resolve the issue, check `nginx.conf` in the root of the ammos-anms project. 
-Ensure that `anms-ui` or `localhost` are set to port `80` and the hostname is correct.
+While the GitHub repositories are the primary means by which users should submit detailed tickets, other inquiries can be made directly via email to the the support address mailto:dtnma-support@jhuapl.edu[,ANMS Support].
 
 
 [index]
