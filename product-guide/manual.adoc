@@ -2,7 +2,7 @@
 Copyright (c) ${years} The Johns Hopkins University Applied Physics
 Laboratory LLC.
 
-This file is part of the Asynchronous Network Managment System (ANMS).
+This file is part of the Asynchronous Network Management System (ANMS).
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ subcontract 1658085.
 [preface]
 == Introduction
 
-This Product Guide provides architectural and maintenance details about the Asynchronous Network Managment System (ANMS), which is part of the Advanced Multi Mission Operations System (AMMOS) suite of tools.
+This Product Guide provides architectural and maintenance details about the Asynchronous Network Management System (ANMS), which is part of the Advanced Multi Mission Operations System (AMMOS) suite of tools.
 
 === Identification
 
@@ -80,6 +80,52 @@ A single node on the network and a single instance of an operating system.
 One host can have many interfaces and many IP addresses, but only one canonical host name.
 Internet Protocol (IP)::
 The network protocol used for inter-container communication and for BP convergence layer messaging with AMP Agents.
+
+
+=== References
+
+.Applicable JPL Rules Documents
+[%header,width=100%,cols="<3,>1"]
+|===
+|Title
+|Document Number
+
+|[[jpl-sd,SD]] Software Development
+|57653 rev 10
+
+|===
+
+
+.Applicable MGSS Documents
+[%header,width=100%,cols="<3,>1"]
+|===
+|Title
+|Document Number
+
+|[[mimtar,MIMTaR]] MGSS Implementation and Maintenance Task Requirements
+|DOC-001819 ref F
+
+|[[anms-user-guide,ANMS User Guide]] ANMS User Guide
+|DOC-005443
+
+|===
+
+.Applicable Other Documents
+[%header,width=100%,cols="<3,>1"]
+|===
+|Title
+|Reference
+
+|Installing Puppet
+|[[puppet-agent]] https://www.puppet.com/docs/puppet/7/install_puppet.html[puppet-agent]
+
+|Installing Bolt
+|[[puppet-bolt]] https://www.puppet.com/docs/bolt/latest/bolt_installing.html#install-bolt-on-rhel[puppet-bolt]
+
+|Using SELinux
+|[[rhel8-selinux]] https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/pdf/using_selinux/red_hat_enterprise_linux-8-using_selinux-en-us.pdf[rhel8-selinux]
+
+|===
 
 
 == ANMS Architecture
@@ -587,18 +633,6 @@ Add the following line to the Puppet common.yaml file, typically found at `+pupp
 ----
 selinux::mode: permissive
 ----
-
-
-
-
-
-[bibliography]
-== References
-[bibliography]
-* [[[anms-user-guide,ANMS User Guide]]] "Asynchronous Network Management System User Guide," JHU/APL
-* [[[puppet-agent]]] Puppet, "Installing Puppet," 2023. Available at https://www.puppet.com/docs/puppet/7/install_puppet.html
-* [[[puppet-bolt]]] Puppet, "Installing Bolt," 2023. Available at https://www.puppet.com/docs/bolt/latest/bolt_installing.html#install-bolt-on-rhel
-* [[[rhel8-selinux,Using SELinux]]] RedHat, "Using SELinux", 7 Feb 2023. Available at https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/pdf/using_selinux/red_hat_enterprise_linux-8-using_selinux-en-us.pdf
 
 [index]
 == Index

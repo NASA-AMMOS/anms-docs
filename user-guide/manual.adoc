@@ -91,6 +91,52 @@ Choose:::
 Selecting an item from a drop-down list of available options.
 
 
+=== References
+
+.Applicable JPL Rules Documents
+[%header,width=100%,cols="<3,>1"]
+|===
+|Title
+|Document Number
+
+|[[jpl-sd,SD]] Software Development
+|57653 rev 10
+
+|===
+
+
+.Applicable MGSS Documents
+[%header,width=100%,cols="<3,>1"]
+|===
+|Title
+|Document Number
+
+|[[mimtar,MIMTaR]] MGSS Implementation and Maintenance Task Requirements
+|DOC-001819 ref F
+
+|[[anms-product-guide,ANMS Product Guide]] ANMS Product Guide
+|DOC-005444
+
+|===
+
+.Applicable Other Documents
+[%header,width=100%,cols="<3,>1"]
+|===
+|Title
+|Reference
+
+|Grafana Documentation
+|[[grafana-docs]] https://grafana.com/docs/[grafana-docs]
+
+|Grafana Dashboard Documentation
+|[[grafana-dashboard]] https://grafana.com/docs/grafana/latest/getting-started/build-first-dashboard/[grafana-dashboard]
+
+|Grafana Panels Documentation
+|[[grafana-panels]] https://grafana.com/docs/grafana/latest/panels-visualizations/[grafana-panels]
+
+|===
+
+
 == User Interface
 
 The following section provides an overview of the ANMS User Interface, organized by the capabilities provided by each of the tabs - Monitor, Agents, Build, Status, ADMs - shown at the top of the ANMS display. 
@@ -373,7 +419,7 @@ If the chosen ARI has parameters, input boxes will be provided for each required
 .ARI Parameter Input
 image::images/simple-ari-param.png[]
 
-ARIs with complex parameters include additional guidance for populating these required fields. For instance, an ARI Collection (AC) builder is provided for ARIs requiring an AC parameter, as shown in <<fig-ari-parms>>. The left side of the screen allows a user to search for the ARI they want to add to the AC and the right-hand side of the screen displays the selected ARI(s). 
+ARIs with complex parameters include additional guidance for populating these required fields. For instance, an ARI Collection (AC) builder is provided for ARIs requiring an AC parameter, as shown in <<fig-ari-params>>. The left side of the screen allows a user to search for the ARI they want to add to the AC and the right-hand side of the screen displays the selected ARI(s). 
 
 [#fig-ari-params]
 .Sample ARI with an AC Parameter
@@ -496,7 +542,7 @@ Selecting the "Get ADMs" button, a user can refresh the table of supported ADMs.
 .Supported ADMs
 image::images/adms-table.png[]
 
-== Downlaoding ADMs
+==== Downlaoding ADMs
 
 Selecting an ADM's name will download the associated JSON file.
 
@@ -1054,17 +1100,6 @@ Check the status of NGix in the docker-compose services list. It may be necessar
 If this restart does not resolve the issue, check `nginx.conf` in the root of the ammos-anms project. 
 Ensure that `anms-ui` or `localhost` are set to port `80` and the hostname is correct.
 
-
-[bibliography]
-== References
-[bibliography]
-* [[[anms-product-guide,ANMS Product Guide]]] "Asynchronous Network Management System Product Guide," JHU/APL
-
-* [[[grafana-docs]]] https://grafana.com/docs/ 
-
-* [[[grafana-dashboard]]] https://grafana.com/docs/grafana/latest/getting-started/build-first-dashboard/
-
-* [[[grafana-panels] https://grafana.com/docs/grafana/latest/panels-visualizations/
 
 [index]
 == Index

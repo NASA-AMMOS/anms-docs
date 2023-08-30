@@ -1,4 +1,4 @@
-<subtitle>DOC-005539, Prepared by The Johns Hopkins Applied Physics Laboratory</subtitle>
+<subtitle>DOC-005444, Prepared by The Johns Hopkins Applied Physics Laboratory</subtitle>
 <!-- <edition>@PROJECT_VERSION@</edition> -->
 <author>
   <orgname>
@@ -34,9 +34,9 @@ subcontract 1658085.
 <revhistory>
   <revision>
     <revnumber>Initial</revnumber>
-    <date>21 August 2023</date>
+    <date>30 August 2023</date>
     <revdescription>
-      Initial issue of document.
+      Initial issue of document for ANMS v1.0
     </revdescription>
   </revision>
 </revhistory>
