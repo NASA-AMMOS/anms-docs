@@ -2,7 +2,7 @@
 Copyright (c) 2023 The Johns Hopkins University Applied Physics
 Laboratory LLC.
 
-This file is part of the Asynchronous Network Managment System (ANMS).
+This file is part of the Asynchronous Network Management System (ANMS).
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ subcontract 1658085.
 -->
 # ANMS Documentation
 
-This repository contains user and maintenance manuals for the Asynchronous Network Managment System (ANMS).
+This repository contains user and maintenance manuals for the Asynchronous Network Management System (ANMS).
 
 It is written with [AsciiDoc](https://asciidoc.org/) and intended for PDF and HTML publication formats.
 
