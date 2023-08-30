@@ -85,45 +85,45 @@ The network protocol used for inter-container communication and for BP convergen
 === References
 
 .Applicable JPL Rules Documents
-[%header,width=100%,cols="<3,>1"]
+[%header,width=100%,cols="<.<3,>.<1"]
 |===
 |Title
 |Document Number
 
-|[[jpl-sd,SD]] Software Development
+|Software Development[[jpl-sd,SD]]
 |57653 rev 10
 
 |===
 
 
 .Applicable MGSS Documents
-[%header,width=100%,cols="<3,>1"]
+[%header,width=100%,cols="<.<3,>.<1"]
 |===
 |Title
 |Document Number
 
-|[[mimtar,MIMTaR]] MGSS Implementation and Maintenance Task Requirements
+|MGSS Implementation and Maintenance Task Requirements[[mimtar,MIMTaR]]
 |DOC-001819 ref F
 
-|[[anms-user-guide,ANMS User Guide]] ANMS User Guide
+|ANMS User Guide[[anms-user-guide,ANMS User Guide]]
 |DOC-005443
 
 |===
 
 .Applicable Other Documents
-[%header,width=100%,cols="<3,>1"]
+[%header,width=100%,cols="<.<3,>.<1"]
 |===
 |Title
 |Reference
 
-|Installing Puppet
-|[[puppet-agent]] https://www.puppet.com/docs/puppet/7/install_puppet.html[puppet-agent]
+|Installing Puppet[[puppet-agent]]
+|https://www.puppet.com/docs/puppet/7/install_puppet.html[puppet-agent]
 
-|Installing Bolt
-|[[puppet-bolt]] https://www.puppet.com/docs/bolt/latest/bolt_installing.html#install-bolt-on-rhel[puppet-bolt]
+|Installing Bolt[[puppet-bolt]]
+|https://www.puppet.com/docs/bolt/latest/bolt_installing.html#install-bolt-on-rhel[puppet-bolt]
 
-|Using SELinux
-|[[rhel8-selinux]] https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/pdf/using_selinux/red_hat_enterprise_linux-8-using_selinux-en-us.pdf[rhel8-selinux]
+|Using SELinux[[rhel8-selinux]]
+|https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/pdf/using_selinux/red_hat_enterprise_linux-8-using_selinux-en-us.pdf[rhel8-selinux]
 
 |===
 

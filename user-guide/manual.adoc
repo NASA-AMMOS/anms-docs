@@ -94,45 +94,45 @@ Selecting an item from a drop-down list of available options.
 === References
 
 .Applicable JPL Rules Documents
-[%header,width=100%,cols="<3,>1"]
+[%header,width=100%,cols="<.<3,>.<1"]
 |===
 |Title
 |Document Number
 
-|[[jpl-sd,SD]] Software Development
+|Software Development[[jpl-sd,SD]]
 |57653 rev 10
 
 |===
 
 
 .Applicable MGSS Documents
-[%header,width=100%,cols="<3,>1"]
+[%header,width=100%,cols="<.<3,>.<1"]
 |===
 |Title
 |Document Number
 
-|[[mimtar,MIMTaR]] MGSS Implementation and Maintenance Task Requirements
+|MGSS Implementation and Maintenance Task Requirements[[mimtar,MIMTaR]]
 |DOC-001819 ref F
 
-|[[anms-product-guide,ANMS Product Guide]] ANMS Product Guide
+|ANMS Product Guide[[anms-product-guide,ANMS Product Guide]]
 |DOC-005444
 
 |===
 
 .Applicable Other Documents
-[%header,width=100%,cols="<3,>1"]
+[%header,width=100%,cols="<.<3,>.<1"]
 |===
 |Title
 |Reference
 
-|Grafana Documentation
-|[[grafana-docs]] https://grafana.com/docs/[grafana-docs]
+|Grafana Documentation[[grafana-docs]]
+|https://grafana.com/docs/[grafana-docs]
 
-|Grafana Dashboard Documentation
-|[[grafana-dashboard]] https://grafana.com/docs/grafana/latest/getting-started/build-first-dashboard/[grafana-dashboard]
+|Grafana Dashboard Documentation[[grafana-dashboard]]
+|https://grafana.com/docs/grafana/latest/getting-started/build-first-dashboard/[grafana-dashboard]
 
-|Grafana Panels Documentation
-|[[grafana-panels]] https://grafana.com/docs/grafana/latest/panels-visualizations/[grafana-panels]
+|Grafana Panels Documentation[[grafana-panels]]
+|https://grafana.com/docs/grafana/latest/panels-visualizations/[grafana-panels]
 
 |===
 
