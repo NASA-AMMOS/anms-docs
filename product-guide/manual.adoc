@@ -105,6 +105,18 @@ The network protocol used for inter-container communication and for BP convergen
 |MGSS Implementation and Maintenance Task Requirements[[mimtar,MIMTaR]]
 |DOC-001819 ref F
 
+|Common Access Manager (CAM) Product Guide (PG)[[cam-pg,CAM Product Guide]]
+|DOC-005065
+
+|ANMS Architecture Description Document[[anms-add,ANMS ADD]]
+|DOC-005089
+
+|ANMS Software Design Document[[anms-sdd,ANMS SDD]]
+|DOC-005445
+
+|ANMS Software Interface Specification[[anms-sis,ANMS SIS]]
+|DOC-005446
+
 |ANMS User Guide[[anms-user-guide,ANMS User Guide]]
 |DOC-005443
 
@@ -124,6 +136,12 @@ The network protocol used for inter-container communication and for BP convergen
 
 |Using SELinux[[rhel8-selinux]]
 |https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/pdf/using_selinux/red_hat_enterprise_linux-8-using_selinux-en-us.pdf[rhel8-selinux]
+
+|ANMS Source[[anms-source]]
+|https://github.com/NASA-AMMOS/anms[anms-source]
+
+|ANMS Guide Document Source[[anms-docs]]
+|https://github.com/NASA-AMMOS/anms-docs[anms-docs]
 
 |===
 
@@ -182,6 +200,11 @@ The total amount of storage needed depends on the mission use of reports, specif
 |Puppet
 |7
 |===
+
+The ANMS is designed to operate on a network where the MGSS Common Access Manager (CAM) is used to manage user accounts and a CAM Gateway is used as a reverse proxy within the ANMS installation to enforce user login sessions and access permissions.
+The ANMS has been exercised with CAM v5.1.0 in a test environment outside of the MGSS environment.
+To deploy the ANMS in an environment without a CAM instance available (or without using it) the ANMS can be built with a CAM Gateway emulator as described in <<sec-deployment-camemu>>.
+In any case, deployment and configuration of CAM itself is outside the scope of this document and is described in detail in the <<cam-pg>>.
 
 [#sec-deployment-camemu]
 ==== Using a CAM Gateway Emulator
@@ -515,6 +538,7 @@ sudo semanage dontaudit off
 ----
 
 
+[#sec-checkout]
 === Checkout Procedures
 
 Each of the following checkout procedures makes progressively more detailed and more normal-operations-like tests of the external interfaces with the ANMS.
@@ -623,16 +647,120 @@ PORT     STATE    SERVICE
 docker exec ion-manager ion_ping_peers 1 2 3
 ----
 
-== Troubleshooting
+== Product Support
 
-=== Puppet
+There are two levels of support for the ANMS: troubleshooting by the administrator or user attempting to install or operate the ANMS, which is detailed in <<sec-troubleshooting>>, and upstream support via the ANMS public GitHub project, accessible as described in <<sec-contact>>.
+Attempts to troubleshoot should be made before submitting issue tickets to the upstream project.
 
-[qanda]
-Errors related to the SELinux modules for the ANMS containers during installation of the ANMS on the local host, as discussed in <<sec-proc-install>>::
-Add the following line to the Puppet common.yaml file, typically found at `+puppet/data/common.yaml+`.
+[#sec-troubleshooting]
+=== Troubleshooting
+
+==== Installation
+
+This section covers issues that can occur during installation (see <<sec-proc-install>>) of the ANMS.
+
+===== SELinux Blocked Behavior
+
+If there are errors related to the SELinux modules for the ANMS containers during installation of the ANMS on the local host, as discussed in <<sec-proc-install>>,
+add the following line to the Puppet `common.yaml` file, typically found at `puppet/data/common.yaml`, and redeploy.
 ----
 selinux::mode: permissive
 ----
+This will result in the host being in permissive mode which allows activity not defined in SELinux modules but records those events to the system audit log.
+See <<sec-proc-mon-selinux>> for details on observing the audit log events.
+
+CAUTION: The SELinux permissive mode is for troubleshooting only and must not be present in a production installation.
+
+
+==== Operations
+
+This section covers issues that can occur after successful installation (see <<sec-proc-install>>) and checkout (see <<sec-checkout>>) of the ANMS.
+
+===== Grafana Containers
+
+If the Grafana panels in the `Monitor` tab displays `Connection was reset` errors, the Grafana container may not have started successfully. 
+
+Restart the container with `docker-compose up grafana` (run from within the `anms/` folder). 
+
+If restarting the container does not resolve the problem, and the Grafana startup 
+contains errors related to only having read-only access to the database, permissions on 
+various files in the source code will need to be updated for Grafana to run. 
+
+For both the `docker_data/grafana_vol/` folder and the `docker_data/grafana_vol/grafana.db` 
+file, change the group to `docker` and the permissions to `777`: 
+
+```
+$ sudo chgrp docker docker_data/grafana__vol
+$ sudo chgrp docker docker_data/grafana_vol/grafana.db
+$ sudo chmod 777 docker_data/grafana_vol
+$ sudo chmod 777 docker_data/grafana_vol/grafana.db
+```
+
+After changing these permissions, run `docker-compose up grafana` again, and the Grafana
+container should start sucessfully.
+
+===== Agent Registration Issues on ANMS Startup
+
+If an Agent is not present in the `Agents` tab on start up, it is likely due to an error in one of the ION containers and their connection to the underlying database. 
+
+To resolve the issue, restart the ION containers using `docker-compose restart n1 n2`.
+
+===== New Agent Registration Issues
+
+If registering a new Agent does not result in an update to the displayed Agents in the ANMS Agent tab,  check that it has been registered to the Manager via the nm-manager CLI.
+The nm-manager CLI is accessible from a terminal, and this check can be done using a command such as:
+```
+docker exec -it ion-manager journalctl -f --unit ion-nm-mgr
+```
+
+If the results confirm that the Agent is registered but it still does not show on the Agents tab of the ANMS, there may be an 
+issue with connection between the Manager and ANMS database.
+
+This can be manually resolved by adding the Agent via the adminer DB tool that is deployed as part of the docker-compose tool at http://localhost/.
+The connection information is described in <<sec-amp-database-querying>>.
+
+
+[#sec-amp-database-querying]
+===== AMP Database Querying
+
+To see what is present in the underlying AMP database, use the adminer access point. 
+
+With ANMS running, go to `localhost:8080` and log in to the database with: 
+- System: `PostgreSQL`
+- Server: `postgres`
+- Username: `root`
+- Password: `root`
+- Database `amp_core`
+
+
+===== ANMS-UI is not visible at hostname:9030
+
+This error may indicate that the anms-ui docker is experiencing issues receiving HTTP requests.
+This is most likely related to the `host` or `bind address` specified in `anms-ui/server/shared/config.py`,
+or an environment variable that overrides this.
+
+===== ANMS-UI is not visible at hostname
+
+If http://hostname:9030 (replace hostname with the server's hostname) displays the ANMS UI, but 
+http://hostname does not render the same page, this indicates an issue with NGinx. 
+
+Check the status of NGix in the docker-compose services list. It may be necessary to restart nginx via 
+`docker-compose -f docker-compose.yml restart nginx`. 
+
+If this restart does not resolve the issue, check `nginx.conf` in the root of the ammos-anms project. 
+Ensure that `anms-ui` or `localhost` are set to port `80` and the hostname is correct.
+
+
+[#sec-contact]
+=== Contacting or Contributing
+
+The ANMS is hosted on a GitHub repository <<anms-source>> with submodule references to several other repositories.
+There is a https://github.com/NASA-AMMOS/anms/blob/main/CONTRIBUTING.md[`CONTRIBUTING.md`] document in the ANMS repository which describes detailed procedures for submitting tickets to identify defects and suggest enhancements.
+
+Separate from the source for the ANMS proper, the ANMS Product Guide and User Guide are hosted on a GitHub repository <<anms-docs>>, with its own https://github.com/NASA-AMMOS/anms-docs/blob/main/CONTRIBUTING.md[`CONTRIBUTING.md`] document for submitting tickets about either the Product Guide or User Guide.
+
+While the GitHub repositories are the primary means by which users should submit detailed tickets, other inquiries can be made directly via email to the the support address mailto:dtnma-support@jhuapl.edu[,ANMS Support].
+
 
 [index]
 == Index
