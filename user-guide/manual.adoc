@@ -352,7 +352,7 @@ image::images/agent-manage.png[]
 
 From this Agent management menu, the user can:
 1. Generate a new ARI to send to the agent(s)
-3. Send a prebuilt string ARI to the agent(s)
+1. Send a prebuilt string ARI to the agent(s)
 
 [#fig-agent-manage-menu]
 .The Agent Management Menu
