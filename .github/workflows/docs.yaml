@@ -40,7 +40,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: dependencies
         run: |
           sudo apt-get update && sudo apt-get install -y cmake make coreutils ruby asciidoctor graphviz inkscape dblatex docbook-xsl-ns xsltproc xmlstarlet
@@ -48,7 +48,7 @@ jobs:
       - name: build
         run: |
           DESTDIR=public ./build.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: docs
           path: public
@@ -61,7 +61,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: docs
           path: public
