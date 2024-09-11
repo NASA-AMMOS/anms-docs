@@ -49,7 +49,7 @@ This Product Guide provides architectural and maintenance details about the Asyn
 |Asynchronous Network Management System (ANMS)
 
 |Version
-|1.0
+|1.1
 |===
 
 === Scope
@@ -103,7 +103,7 @@ The network protocol used for inter-container communication and for BP convergen
 |Document Number
 
 |MGSS Implementation and Maintenance Task Requirements[[mimtar,MIMTaR]]
-|DOC-001819 ref F
+|DOC-001455 rev G
 
 |Common Access Manager (CAM) Product Guide (PG)[[cam-pg,CAM Product Guide]]
 |DOC-005065
@@ -118,7 +118,7 @@ The network protocol used for inter-container communication and for BP convergen
 |DOC-005446
 
 |ANMS User Guide[[anms-user-guide,ANMS User Guide]]
-|DOC-005443
+|DOC-005443 rev A
 
 |===
 
