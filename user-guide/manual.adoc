@@ -48,7 +48,7 @@ This User Guide provides an overview of the user interface (UI) and high-level w
 |Asynchronous Network Management System (ANMS)
 
 |Version
-|1.0
+|1.1
 |===
 
 === Scope
@@ -112,10 +112,10 @@ Selecting an item from a drop-down list of available options.
 |Document Number
 
 |MGSS Implementation and Maintenance Task Requirements[[mimtar,MIMTaR]]
-|DOC-001819 ref F
+|DOC-001455 rev G
 
 |ANMS Product Guide[[anms-product-guide,ANMS Product Guide]]
-|DOC-005444
+|DOC-005444 rev A
 
 |===
 
