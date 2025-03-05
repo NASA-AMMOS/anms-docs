@@ -26,3 +26,5 @@ This repository contains user and maintenance manuals for the Asynchronous Netwo
 It is written with [AsciiDoc](https://asciidoc.org/) and intended for PDF and HTML publication formats.
 
 Once tools are installed and available, the `build.sh` script will build the documents.
+
+The interfaces of the Asynchronous Network Management System (ANMS) are defined by the [ANMS Software Interface Specification](ANMS%20Software%20Interface%20Specification%20rev%20A.pdf)
