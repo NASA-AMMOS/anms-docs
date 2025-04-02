@@ -1,9 +1,10 @@
 digraph AMMOS {
   node [shape=box,style=filled];
+  newrank=true;
 
   subgraph cluster_ANMS {
     label="ANMS Instance";
-    labeljust=r;
+    labeljust=l;
 
     authnz [label="CAM Gateway" group=main];
     authnz -> nginx [label="HTTP"];
@@ -44,9 +45,10 @@ digraph AMMOS {
   subgraph cluster_agents {
     label="Managed Device [0..*]";
     labeljust=r;
-    style=filled;
 
     amp_agent [label="AMP Agent"];
     amp_manager -> amp_agent [label="AMP"];
   }
+
+  { rank = same; authnz; cam_server; }
 }

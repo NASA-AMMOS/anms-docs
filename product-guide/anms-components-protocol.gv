@@ -1,8 +1,10 @@
 digraph AMMOS {
   node [shape=box,style=filled];
+  newrank=true;
 
   subgraph cluster_ANMS {
     label="ANMS Instance";
+    labeljust=l;
 
     authnz [label="CAM Gateway" group=main];
     nginx [group=main];
@@ -13,17 +15,7 @@ digraph AMMOS {
     transcoder [label="transcoder"];
     aricodec [label="aricodec"];
     mqtt_broker [label="mqtt-broker"];
-    subgraph cluster_manager {
-      label="ion-manager";
-      style=filled;
-
-      amp_manager [label="AMP Manager"];
-      bp_manager [label="BP Agent"];
-      cla_manager [label="CLA"];
-      
-      amp_manager -> bp_manager [label="IPC"];
-      bp_manager -> cla_manager [label="BP"];
-    }
+    amp_manager [label="amp-manager", group=main];
     opensearch [label="opensearch"]
     opensearch_dash [label="opensearch-dashboards"];
 
@@ -66,28 +58,40 @@ digraph AMMOS {
 
   subgraph cluster_user_agent {
     label="User Agent [0..*]";
-    style=filled;
 
     ui_runtime [label="ANMS UI" group=main];
-    browser [label="Web Browser [0..*]" group=main];
+    browser [label="Web\nBrowser [0..*]" group=main];
     ui_runtime -> browser [label="ECMAScript"];
     browser -> authnz [label="HTTP"];
 
-    proxy [label="Proxy application [0..*]"];
+    proxy [label="User\napplication [0..*]"];
     proxy -> authnz [label="HTTP"];
   }
   
+  subgraph cluster_ion {
+    label="Manager ION Node";
+
+    app_proxy [label="Application Proxy"];
+    bp_manager [label="BP Agent"];
+    cla_manager [label="CLA"];
+    
+    app_proxy -> bp_manager [label="SHM"];
+    bp_manager -> cla_manager [label="BP"];
+  }
+  amp_manager -> app_proxy [label="UNIX Socket"];
+
   subgraph cluster_agents {
     label="Managed Device [0..*]";
-    style=filled;
 
     amp_agent [label="AMP Agent"];
     bp_managed [label="BP Agent"];
     cla_managed [label="CLA"];
 
-    amp_agent -> bp_managed [label="IPC"];
+    amp_agent -> bp_managed [label="SHM"];
     bp_managed -> cla_managed [label="BP"];
   }
-  #bp_manager -> bp_managed [style=dashed dir=both];
-  cla_manager -> cla_managed [label="IP" dir=both];
+  cla_manager -> cla_managed [label="        IP",dir=both,constraint=false];
+  
+  { rank = same; authnz; cam_server; }
+  { rank = same; app_proxy; amp_agent; }
 }
