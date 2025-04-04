@@ -27,7 +27,11 @@ project(${DIRNAME} VERSION 0 LANGUAGES )
 
 # File paths
 set(ADOC_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/manual.adoc")
-set(ADOC_EXTRAS "anms-components-logical.gv" "anms-components-protocol.gv")
+set(ADOC_EXTRAS 
+    "anms-components-logical.gv"
+    "anms-components-protocol.gv"
+    "anms-light-protocol.gv"
+)
 
 
 find_program(ASCIIDOC asciidoctor REQUIRED)

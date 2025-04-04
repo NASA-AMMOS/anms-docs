@@ -171,6 +171,19 @@ graphviz::anms-components-protocol.gv[format=svg]
 .ANMS Primary Components with Logical Associations
 graphviz::anms-components-logical.gv[format=svg]
 
+==== Light Components
+
+A lightweight ("light") configuration of the ANMS involves removing containers related to web browser user interfaces, including the `anms-ui` file server and its `redis` cache, the `grafana` plotting UI and its renderer, the `adminer` database inspection UI, and the OpenSearch dashboard UI.
+
+This is depicted in the set of containers in the diagram of <<fig-anms-light-protocol>>.
+The expectation of this light configuration is that there will not be a web browser user agent interacting with the ANMS, but instead some HTTP client application operated by another operations/management system external to ANMS.
+
+In the light configuration, the ANMS will still support loading of ADMs needed to operate the transcoder service, sending immediate execution messages to agents, receiving and archiving report messages from agents, and allowing direct access to report contents as well as the postgres data warehouse (which would normally be used by the Grafana plotting UI).
+
+[#fig-anms-light-protocol]
+.ANMS Light Components with Protocol Associations
+graphviz::anms-light-protocol.gv[format=svg]
+
 
 [#sec-deployment]
 === Deployment
