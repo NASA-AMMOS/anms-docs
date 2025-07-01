@@ -8,22 +8,14 @@ digraph AMMOS {
 
     authnz [label="CAM Gateway" group=main];
 
-    anms_ui [label="anms-ui" group=main];
     anms_core [label="anms-core" group=main];
     transcoder [label="transcoder"];
     aricodec [label="aricodec"];
     mqtt_broker [label="mqtt-broker"];
     amp_manager [label="amp-manager", group=main];
-    opensearch [label="opensearch"]
-    opensearch_dash [label="opensearch-dashboards"];
 
     postgres;
-    redis;
 
-    authnz -> opensearch_dash -> opensearch [label="HTTP"];
-
-    authnz -> anms_ui [label="HTTP"];
-    anms_ui -> redis [label="RESP"];
     authnz -> anms_core [label="HTTP"];
     anms_core -> postgres [label="PGSQL"];
     anms_core -> amp_manager [label="REST/HTTP"];
@@ -33,13 +25,6 @@ digraph AMMOS {
 
     authnz -> amp_manager [label="HTTP"];
     amp_manager -> postgres [label="PGSQL"];
-
-    grafana;
-    grafana_image_renderer [label="grafana-image-renderer"];
-    authnz -> grafana [label="HTTP"];
-    grafana_image_renderer -> grafana [label="HTTP"];
-    
-    grafana -> postgres [label="PGSQL"];
   }
 
   subgraph cluster_infra {
@@ -54,11 +39,6 @@ digraph AMMOS {
 
   subgraph cluster_user_agent {
     label="User Agent [0..*]";
-
-    ui_runtime [label="ANMS UI" group=main];
-    browser [label="Web\nBrowser [0..*]" group=main];
-    ui_runtime -> browser [label="ECMAScript"];
-    browser -> authnz [label="HTTP"];
 
     proxy [label="User\napplication [0..*]"];
     proxy -> authnz [label="HTTP"];

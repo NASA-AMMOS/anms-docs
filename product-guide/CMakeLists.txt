@@ -27,6 +27,11 @@ project(${DIRNAME} VERSION 0 LANGUAGES )
 
 # File paths
 set(ADOC_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/manual.adoc")
+set(ADOC_EXTRAS 
+    "anms-components-logical.gv"
+    "anms-components-protocol.gv"
+    "anms-light-protocol.gv"
+)
 
 
 find_program(ASCIIDOC asciidoctor REQUIRED)
@@ -39,7 +44,7 @@ configure_file(
 set(OUT_DBOOK "manual.docbook.xml")
 add_custom_command(
   OUTPUT ${OUT_DBOOK}
-  DEPENDS ${ADOC_SOURCE} ${OUT_DOCINFO}
+  DEPENDS ${ADOC_SOURCE} ${ADOC_EXTRAS} ${OUT_DOCINFO}
   COMMAND
     ${ASCIIDOC} -v -r asciidoctor-diagram
     --base-dir ${CMAKE_CURRENT_SOURCE_DIR}
