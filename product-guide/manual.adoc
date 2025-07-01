@@ -223,7 +223,7 @@ In any case, deployment and configuration of CAM itself is outside the scope of 
 ==== Using a CAM Gateway Emulator
 
 To allow the ANMS to be tested in environments where a CAM Server is unavailable or too burdensome to set up, the ANMS can be built with an emulator of the CAM Gateway which uses static accounts, credentials, and access controls.
-The environment `AUTHNZ_EMU=1` during a build (see <<sec-proc-build>>) enables the CAM Gateway emulator behavior.
+The environment `AUTHNZ_EMU=demo` during a build (see <<sec-proc-build>>) enables the CAM Gateway emulator behavior.
 
 CAUTION: The CAM Gateway emulator is for demonstration only and must not be present in a production installation.
 
@@ -246,6 +246,7 @@ Exposes TCP port 8080 for HTTP.
 `authnz`::
 The CAM Gateway reverse proxy for authentication, authorization, and auditing \(((AAA))); also the endpoint of user agent TLS connections.
 This container uses the external `ammos-tls` volume for TLS configuration (see <<sec-proc-install-tls>>).
+This provides HTTP routing access is to `anms-ui`, `anms-core`, and `grafana` containers.
 Exposes TCP port 443 for HTTPS and 80 for HTTP, both mapped to the same host port numbers.
 `anms-core`::
 The ANMS backend REST services.
@@ -268,10 +269,6 @@ A service to convert ARI between text and compressed binary form based on availa
 `mqtt-broker`::
 The broker host for MQTT pub-sub messaging.
 Exposes TCP port 1883 for MQTT.
-`nginx`::
-Frontend load balancer and HTTP router.
-Principal access is to `anms-ui` and `grafana`.
-Exposes TCP port 80 for HTTP.
 `opensearch`::
 Log aggregator for the ANMS. This uses the `opensearch` volume for storage.
 Exposes TCP port 9200 and 9600 for internal APIs.
@@ -320,17 +317,12 @@ The Docker network configuration for the ANMS includes host port forwarding for 
 
 HTTPS::
 Default port 443 forwarded to the `authnz` container for HTTP use.
-UDPCL::
-Default port 4556 forwarded to the `ion-manager` container for BP use.
-LTPCL::
-Default port 1113 forwarded to the `ion-manager` container for BP use.
 
-The current ANMS will allow only the BP UDP Convergence Layer \(((UDPCL))) to be configured on agents, but this is a UI restriction and not an intrinsic limitation of the BP Agent used by the ANMS.
-Future versions of the ANMS will allow more complex convergence layer configurations.
+As depicted in <<fig-anms-components-protocol>>, the ANMS deployment itself does not include a BP Agent and does not either contain or require any specific configuration of a BP Agent or its associated convergence layers.
 
 [NOTE]
-The ANMS deployment manifest includes an optional set of local AMP Agents to use to test with.
-These use the local Docker network to communicate with the ANMS, while real remote agents will require the external network configuration to include port forwarding and host name resolution for the ANMS BP Agent.
+The ANMS "testenv" compose configuration includes an optional AMP Manager and a set of local AMP Agents to use to test with.
+These use a separate "testenv" Docker network to communicate between each other, while real remote agents will require external network configuration to include port forwarding and host name resolution for the Manager-associated BP Agent.
 How those are configured is outside the scope of this document.
 
 
@@ -341,11 +333,9 @@ The host on which the ANMS instance runs is expected to have ((FIPS-140)) mode e
 Part of the ANMS deployment includes an SELinux module for each of the component containers which allow all necessary inter-service communication.
 If issues with SELinux are suspected in a deployment, follow the procedures in <<sec-proc-mon-selinux>> to find any audit events related to the ANMS.
 
-The host is also expected to have a running OS-default firewall which will be configured by the Puppet module to allow HTTPS for user agents and BP UDPCL and LTPCL default ports.
+The host is also expected to have a running OS-default firewall which will be configured by the Puppet module to allow HTTPS for user agent access.
 
 The interface between ANMS and its User Agents is TLS-secured HTTP with a PKIX certificate supplied by the host network management and chained to the CA hierarchy of the network. 
-
-The interface between ANMS and its managed AMP Agents is not currently secured, pending updates to the BP Agent to enable BPSec for integrity and/or confidentiality of AMP messages.
 
 
 [#sec-database]
@@ -404,7 +394,7 @@ which by default uses the current top-level branch name as the tag for all conta
 ====
 To build an ANMS that uses an emulator for the CAM Gateway (which means that the ANMS will not require a CAM server), have the following environment set in the build step above:
 ----
-export AUTHNZ_EMU=1
+export AUTHNZ_EMU=demo
 ----
 ====
 
@@ -502,11 +492,11 @@ Although the docker volume `anms_postgres` contains the raw database state, this
 
 To perform an online backup (keeping the database running) run the following on the host:
 ```
-docker exec postgres pg_dump -Ft -d amp_core | gzip -c >~/anms-backup.tar.gz
+podman compose -p anms exec -T postgres pg_dump -Ft -d amp_core | gzip -c >~/anms-backup.tar.gz
 ```
 which can the later be restored using:
 ```
-gunzip -c <~/anms-backup.tar.gz | docker exec -i postgres pg_restore --clean -d amp_core
+gunzip -c <~/anms-backup.tar.gz | podman compose -p anms exec -T postgres pg_restore --clean -d amp_core
 ```
 
 
@@ -620,7 +610,7 @@ Location: /authn/login.html
 [#sec-checkout-bpa]
 ==== BP Agent Communication
 
-This procedure checks whether the BPA in the ANMS can communicate with the BPA of a specific managed device.
+This procedure checks whether the BPA in the "testenv" network can communicate with the BPA of a specific managed device.
 
 The checkout procedure is as follows:
 
@@ -657,7 +647,7 @@ PORT     STATE    SERVICE
 . From the ANMS host run the following:
 +
 ----
-docker exec ion-manager ion_ping_peers 1 2 3
+podman compose -p testenv exec ion-manager ion_ping_peers 1 2 3
 ----
 
 == Product Support
@@ -723,7 +713,7 @@ To resolve the issue, restart the ION containers using `docker-compose restart n
 If registering a new Agent does not result in an update to the displayed Agents in the ANMS Agent tab,  check that it has been registered to the Manager via the nm-manager CLI.
 The nm-manager CLI is accessible from a terminal, and this check can be done using a command such as:
 ```
-docker exec -it ion-manager journalctl -f --unit ion-nm-mgr
+podman compose -p anms amp-manager journalctl -f --unit refdm-proxy
 ```
 
 If the results confirm that the Agent is registered but it still does not show on the Agents tab of the ANMS, there may be an 
