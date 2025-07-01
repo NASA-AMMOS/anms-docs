@@ -289,20 +289,55 @@ An intermediate service to bookkeep transcoding requests from the ANMS to the AR
 [#sec-host-files]
 === Filesystem
 
-Because the ANMS is deployed as a Docker Compose configuration, the only primary files present on the host are to configure docker, its use as a system service, and the system firewall.
+Because the ANMS is deployed as a Podman Compose configuration, the only primary files present on the host are to configure a compose project, its use as a system service, and the system firewall.
 
-The principal files and directories used by ANMS are:
+The principal directories and files used by ANMS are:
+
+`/etc/systemd/system`::
+Directory for systemd local configuration units.
+Its contents for ANMS are:
+`podman-compose@.service`:::
+A template systemd service for all compose projects represented as files below.
+
+`/etc/containers/compose/projects`::
+Compose project top-level service configuration files.
+Each file is used by the `podman-compose@` template service.
+Its contents for ANMS are:
+`anms.env`:::
+The ANMS service configuration.
+`testenv.env`:::
+The test environment service configuration.
 
 `/ammos/anms`::
-The project-specific deployment path for compose configurations, under which are:
+The project-specific deployment path for compose configurations.
+Its contents are:
 `.env`:::
-Environment configuration for the ANMS containers.
-`docker-compose.yml`:::
-The actual Docker Compose configuration for the ANMS, which is configured for auto-startup containers at Docker start.
+The compose-level environment configuration for all of the ANMS and testenv containers.
+`anms-compose.yml`:::
+Compose configuration for the ANMS containers, volumes, and networks.
+The compose runtime is managed by the `podman-compose@` template service.
+`testenv-compose.yml`:::
+Compose configuration for the test environment containers and network.
+
+`/run/anms`::
+The temporary file directory used at runtime.
+Its contents are:
+`proxy.sock`:::
+The transport proxy socket needed by the AMP Manager in order to message to and from agents.
 
 Secondary files related to the ANMS deployment are:
 
-`/etc/docker/daemon.json`::
+`/ammos/etc/pki/tls`::
+Host-level PKI security configuration from which the ANMS user-agent TLS configuration is derived.
+Its contents for ANMS are:
+`private/ammos-server-key.pem`:::
+The private key for the local TLS endpoint.
+`certs/ammos-server-cert.pem`:::
+The corresponding public key certificiate for the local TLS endpoint.
+`certs/ammos-ca-bundle.crt`:::
+The trusted CA bundle for all TLS endpoints (including users).
+
+`/etc/containers/containers.conf`::
 Configured to enable SELinux for containers.
 `/var/cache/puppet/puppet-selinux/modules`::
 The containing directory for SELinux modules for the ANMS containers (see <<sec-security>>).
@@ -501,23 +536,23 @@ gunzip -c <~/anms-backup.tar.gz | podman compose -p anms exec -T postgres pg_res
 
 
 [#sec-proc-mon-docker]
-==== Docker State and Logs
+==== Container State and Logs
 
-Because of the Docker Compose configuration described in <<sec-host-files>>, accessing docker state and logs requires running docker with a command similar to the following:
+Because of the Compose configuration described in <<sec-host-files>>, accessing container state and logs requires running podman with a command similar to the following:
 ```
-docker-compose -f /ammos/anms/docker-compose.yml -p anms [action] ...
+podman compose -p anms [action] ...
 ```
 
 The state of all containers in the ANMS project can be observed with:
 ```
-docker-compose -f /ammos/anms/docker-compose.yml -p anms ps
+podman compose -p anms ps
 ```
 which will report a "State" column either as "Up" for simple servcies or "Up (healthy)" for health-checked services.
 
 
-And observing logs from specific docker containers requires running a command similar to:
+And observing logs from specific containers requires running a command similar to:
 ```
-docker-compose -f /ammos/anms/docker-compose.yml -p anms logs [service-name]
+podman compose -p anms logs [service-name]
 ```
 
 
@@ -606,6 +641,24 @@ Server: Apache/2.4.37 (Red Hat Enterprise Linux) OpenSSL/1.1.1k
 Location: /authn/login.html
 ----
 
+[#sec-checkout-refdm]
+==== AMP Manager Proxy Connection
+
+This procedure checks whether the AMP Manager within the ANMS can connect to its transport proxy.
+
+The checkout procedure is as follows:
+
+. From the ANMS host verify the proxy socket exists with:
++
+----
+ls -l /run/anms/
+----
+which should include the file "proxy.sock".
+
+. From the ANMS host check the REFDM daemon logs with:
+----
+docker compose -p anms exec -T amp-manager journalctl --unit refdm-proxy | grep -B4 Connected
+----
 
 [#sec-checkout-bpa]
 ==== BP Agent Communication
@@ -619,7 +672,7 @@ The checkout procedure is as follows:
 ----
 sudo firewall-cmd --zone public --list-services
 ----
-which should include the servies "ltp" and "dtn-bundle-udp".
+which should include the services "ltp" and "dtn-bundle-udp".
 . From any RHEL-8 host on the agent network run the following:
 +
 ----
@@ -713,7 +766,7 @@ To resolve the issue, restart the ION containers using `docker-compose restart n
 If registering a new Agent does not result in an update to the displayed Agents in the ANMS Agent tab,  check that it has been registered to the Manager via the nm-manager CLI.
 The nm-manager CLI is accessible from a terminal, and this check can be done using a command such as:
 ```
-podman compose -p anms amp-manager journalctl -f --unit refdm-proxy
+podman compose -p anms exec amp-manager journalctl -f --unit refdm-proxy
 ```
 
 If the results confirm that the Agent is registered but it still does not show on the Agents tab of the ANMS, there may be an 
@@ -745,13 +798,11 @@ or an environment variable that overrides this.
 ===== ANMS-UI is not visible at hostname
 
 If http://hostname:9030 (replace hostname with the server's hostname) displays the ANMS UI, but 
-http://hostname does not render the same page, this indicates an issue with NGinx. 
+http://hostname does not render the same page, this indicates an issue with the frontend HTTP router. 
 
-Check the status of NGix in the docker-compose services list. It may be necessary to restart nginx via 
-`docker-compose -f docker-compose.yml restart nginx`. 
-
-If this restart does not resolve the issue, check `nginx.conf` in the root of the ammos-anms project. 
-Ensure that `anms-ui` or `localhost` are set to port `80` and the hostname is correct.
+Check the status of the `authnz` container in the compose services list.
+It may be necessary to restart nginx via 
+`sudo podman compose -p anms restart authnz`. 
 
 
 [#sec-contact]
