@@ -801,7 +801,7 @@ If http://hostname:9030 (replace hostname with the server's hostname) displays t
 http://hostname does not render the same page, this indicates an issue with the frontend HTTP router. 
 
 Check the status of the `authnz` container in the compose services list.
-It may be necessary to restart nginx via 
+It may be necessary to restart the container using:
 `sudo podman compose -p anms restart authnz`. 
 
 

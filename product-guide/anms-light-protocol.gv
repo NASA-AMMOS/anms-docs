@@ -7,8 +7,6 @@ digraph AMMOS {
     labeljust=l;
 
     authnz [label="CAM Gateway" group=main];
-    nginx [group=main];
-    authnz -> nginx [label="HTTP"];
 
     anms_core [label="anms-core" group=main];
     transcoder [label="transcoder"];
@@ -18,13 +16,14 @@ digraph AMMOS {
 
     postgres;
 
-    nginx -> anms_core [label="HTTP"];
+    authnz -> anms_core [label="HTTP"];
     anms_core -> postgres [label="PGSQL"];
     anms_core -> amp_manager [label="REST/HTTP"];
     anms_core -> mqtt_broker [label="MQTT"];
     transcoder -> mqtt_broker [label="MQTT"];
     aricodec -> mqtt_broker [label="MQTT"];
 
+    authnz -> amp_manager [label="HTTP"];
     amp_manager -> postgres [label="PGSQL"];
   }
 
