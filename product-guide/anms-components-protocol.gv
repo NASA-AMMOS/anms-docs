@@ -5,8 +5,7 @@ digraph AMMOS {
     label="ANMS Instance";
 
     authnz [label="CAM Gateway" group=main];
-    nginx [group=main];
-    authnz -> nginx [label="HTTP"];
+    authnz -> authnz [label="HTTP"];
     
     anms_ui [label="anms-ui" group=main];
     anms_core [label="anms-core" group=main];
@@ -31,12 +30,12 @@ digraph AMMOS {
     postgres;
     redis;
 
-    nginx -> adminer [label="HTTP"];
+    authnz -> adminer [label="HTTP"];
     adminer -> postgres [label="PGSQL"];
     
-    nginx -> opensearch_dash -> opensearch [label="HTTP"];
+    authnz -> opensearch_dash -> opensearch [label="HTTP"];
 
-    nginx -> anms_ui -> anms_core [label="HTTP"];
+    authnz -> anms_ui -> anms_core [label="HTTP"];
     anms_ui -> redis [label="RESP"];
     anms_core -> postgres [label="PGSQL"];
     anms_core -> amp_manager [label="REST/HTTP"];
@@ -48,7 +47,7 @@ digraph AMMOS {
 
     grafana;
     grafana_image_renderer [label="grafana-image-renderer"];
-    nginx -> grafana [label="HTTP"];
+    authnz -> grafana [label="HTTP"];
     grafana_image_renderer -> grafana [label="HTTP"];
     
     grafana -> postgres [label="PGSQL"];

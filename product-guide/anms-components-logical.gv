@@ -6,24 +6,23 @@ digraph AMMOS {
     labeljust=r;
 
     authnz [label="CAM Gateway" group=main];
-    authnz -> nginx [label="HTTP"];
+    authnz -> authnz [label="HTTP"];
     
-    nginx [group=main];
     anms_core [label="anms-core" group=main];
     transcoder [label="Transcoder"];
     aricodec [label="ARI CODEC"];
     amp_manager [label="AMP Manager"];
     
-    nginx -> anms_core [label="REST"];
+    authnz -> anms_core [label="REST"];
     anms_core -> dw [label="SQL"];
     anms_core -> amp_manager [label="AMP"];
     anms_core -> transcoder -> aricodec [label="MQTT"];
 
     grafana [label="Grafana"];
-    nginx -> grafana [label="HTTP"];
+    authnz -> grafana [label="HTTP"];
 
     diagnostic [label="Diagnostic Tools"];
-    nginx -> diagnostic [label="HTTP"];
+    authnz -> diagnostic [label="HTTP"];
 
     dw [label="Data warehouse"];
     amp_manager -> dw [label="SQL"];

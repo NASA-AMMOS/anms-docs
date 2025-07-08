@@ -6,7 +6,7 @@
   </orgname>
 </author>
 <copyright>
-  <year>2023-2024</year>
+  <year>2023-2025</year>
   <holder>The Johns Hopkins University Applied Physics Laboratory LLC</holder>
 </copyright>
 <legalnotice>
@@ -44,6 +44,13 @@ subcontract 1658085.
     <date>28 August 2024</date>
     <revdescription>
       Updates for ANMS v1.1.0
+    </revdescription>
+  </revision>
+  <revision>
+    <revnumber>B</revnumber>
+    <date>31 July 2025</date>
+    <revdescription>
+      Updates for ANMS v2.0
     </revdescription>
   </revision>
 </revhistory>
