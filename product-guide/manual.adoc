@@ -405,7 +405,7 @@ When reports arrive from managed agents and are associated with known ADMs they 
 == Development Procedures
 
 This chapter includes procedures related to development and pre-production testing of the ANMS.
-These procedures assume that the user has a working copy of the ANMS source tree an intends to make some changes to the source or the configuration outside of a normal production deployment procedure (where build happens on a separate host than ultimate installation).
+These procedures assume that the user has a working copy of the ANMS source tree an intends to make some changes to the source or the configuration outside of a normal production deployment procedure (where build happens on a different host from the ultimate installation).
 
 [#sec-devel-deploy]
 === Test Build and Deployment
@@ -654,7 +654,7 @@ The checkout procedure is as follows:
 ----
 sudo firewall-cmd --zone public --list-services
 ----
-which should include the servies "https".
+which should include the services "https".
 . From a client host check the port is open with:
 +
 ----
@@ -726,7 +726,7 @@ The checkout procedure is as follows:
 ----
 sudo firewall-cmd --zone public --list-services
 ----
-which should include the servies "ltp" and "dtn-bundle-udp".
+which should include the services "ltp" and "dtn-bundle-udp".
 . From any RHEL-9 host on the agent network run the following:
 +
 ----
