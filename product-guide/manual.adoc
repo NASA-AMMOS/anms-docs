@@ -155,7 +155,7 @@ Although some of the subsystems have a preferred start-up order (to ensure initi
 
 === ANMS Components
 
-The subsystems of the ANMS (all Docker containers) are illustrated as gray blocks within the "ANMS Instance" group in the diagram of <<fig-anms-components-protocol>>.
+The subsystems of the ANMS (all containers) are illustrated as gray blocks within the "ANMS Instance" group in the diagram of <<fig-anms-components-protocol>>.
 The entire ANMS instance is made to be run on a single host, with future plans to allow installing in a more distributed environment.
 Currently the ANMS provides security at the boundary of the instance but not between comtainers (see <<sec-security>> for details), which would be required for a distributed installation.
 
@@ -188,13 +188,13 @@ graphviz::anms-light-protocol.gv[format=svg]
 [#sec-deployment]
 === Deployment
 
-The target host will be running the RedHat Enterprise Linux \(((RHEL))) version 8 (RHEL-8) with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
+The target host will be running the RedHat Enterprise Linux \(((RHEL))) version 9 (RHEL-9) with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
 
 The ANMS is intended to be deployed using the ((Puppet)) orchestrator, either from a local Puppet apply execution or configured from a central Puppet server.
 Part of the ANMS source is a Puppet module "anms" to automate the configuration of an ANMS deployment.
 Specific procedures for performing an installation using a local Puppet apply are in <<sec-proc-install>>.
 
-Conditions for installing the ANMS are a host with packages identified in <<target-host-packages>>, at least 7{nbsp}GiB of filesystem space for docker image storage, and additional space for long-term data warehouse storage.
+Conditions for installing the ANMS are a host with packages identified in <<target-host-packages>>, at least 7{nbsp}GiB of filesystem space for container image storage, and additional space for long-term data warehouse storage.
 The total amount of storage needed depends on the mission use of reports, specifically the average size and rate of reported data.
 
 [#target-host-packages]
@@ -204,14 +204,20 @@ The total amount of storage needed depends on the mission use of reports, specif
 |Package Name
 |Version Minimum
 
-|docker-ce
-|23.0.1
+|podman
+|5.2
 
-|docker-compose
-|1.29.2
+|podman-compose
+|1.0
+
+|systemd
+|252
 
 |Puppet
 |7
+
+|Puppet Bolt
+|4
 |===
 
 The ANMS is designed to operate on a network where the MGSS Common Access Manager (CAM) is used to manage user accounts and a CAM Gateway is used as a reverse proxy within the ANMS installation to enforce user login sessions and access permissions.
@@ -312,12 +318,13 @@ The test environment service configuration.
 The project-specific deployment path for compose configurations.
 Its contents are:
 `.env`:::
-The compose-level environment configuration for all of the ANMS and testenv containers.
+The compose-level environment configuration for all of the ANMS and testenv containers, including host port mapping options (see <<sec-deploy-containers>>).
 `anms-compose.yml`:::
 Compose configuration for the ANMS containers, volumes, and networks.
-The compose runtime is managed by the `podman-compose@` template service.
+The compose runtime is managed by the `podman-compose@anms` template service.
 `testenv-compose.yml`:::
 Compose configuration for the test environment containers and network.
+The compose runtime is managed by the `podman-compose@testenv` template service.
 
 `/run/anms`::
 The temporary file directory used at runtime.
@@ -326,6 +333,14 @@ Its contents are:
 The transport proxy socket needed by the AMP Manager in order to message to and from agents.
 
 Secondary files related to the ANMS deployment are:
+
+`/etc/containers/containers.conf`::
+Configured to enable compose provider and SELinux for containers.
+`/etc/containers/compose/projects/anms.env`::
+The systemd environment for the `anms` project, used by the systemd service `podman-compose@anms`.
+This points to `/ammos/anms/` for its compose configuration.
+`/etc/systemd/system/podman-compose@.service`::
+A parameterized service interface which reads compose environment from under `/etc/containers/compose/projects/`
 
 `/ammos/etc/pki/tls`::
 Host-level PKI security configuration from which the ANMS user-agent TLS configuration is derived.
@@ -337,8 +352,6 @@ The corresponding public key certificiate for the local TLS endpoint.
 `certs/ammos-ca-bundle.crt`:::
 The trusted CA bundle for all TLS endpoints (including users).
 
-`/etc/containers/containers.conf`::
-Configured to enable SELinux for containers.
 `/var/cache/puppet/puppet-selinux/modules`::
 The containing directory for SELinux modules for the ANMS containers (see <<sec-security>>).
 
@@ -346,9 +359,9 @@ The containing directory for SELinux modules for the ANMS containers (see <<sec-
 [#sec-network]
 === Networking
 
-The target host will be running RHEL-8 with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
+The target host will be running RHEL-9 with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
 
-The Docker network configuration for the ANMS includes host port forwarding for the following services:
+The container network configuration (under `/ammos/anms`) for the ANMS includes host port forwarding for the following services:
 
 HTTPS::
 Default port 443 forwarded to the `authnz` container for HTTP use.
@@ -388,21 +401,67 @@ Reported ((Data Warehouse))::
 When reports arrive from managed agents and are associated with known ADMs they are disassembled and stored as object-values in the historical data warehouse.
 
 
+[#sec-devel]
+== Development Procedures
+
+This chapter includes procedures related to development and pre-production testing of the ANMS.
+These procedures assume that the user has a working copy of the ANMS source tree an intends to make some changes to the source or the configuration outside of a normal production deployment procedure (where build happens on a different host from the ultimate installation).
+
+[#sec-devel-deploy]
+=== Test Build and Deployment
+
+TBD
+
+[#sec-devel-install]
+=== Production-Like Build and Installation
+
+This procedure builds images in the root user's podman context and then uses puppet to install to the local host.
+
+More TBD
+
+. Images for all of the ANMS production and test containers can be built with the following:
+```
+sudo AUTHNZ_EMU=authnz-emu podman compose -p anms -f docker-compose.yml --podman-build-args='--format docker' build
+sudo podman compose -p agents -f agent-compose.yml --podman-build-args='--format docker' build
+```
+. The deployment configuration is set by editing the file `puppet/data/override.yaml` to contain similar to:
++
+----
+anms::docker_image_prefix: "" # Left empty to use locally built images
+anms::docker_image_tag: "latest"
+----
+. Pull the necessary upstream Puppet modules with:
++
+----
+./puppet/prep.sh
+----
+. Perform a dry-run of the puppet apply with:
++
+----
+sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test --noop
+----
+and verify that there are no unexpected changes.
+. Perform the actual puppet apply with:
++
+----
+sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test
+----
+
+
 [#sec-proc]
-== Procedures
+== Production Procedures
 
-This chapter includes specific procedures related to managing an ANMS instance.
-
+This chapter includes specific procedures related to managing an ANMS production instance.
 
 [#sec-proc-build]
 === Building
 
-The ANMS source is composed of a top-level repository `ammos-anms` and a number of submodule repositories; all of them are required for building the ANMS.
+The ANMS source is composed of a top-level repository `anms` and a number of submodule repositories; all of them are required for building the ANMS.
 
 . The top-level checkout can be done with:
 +
 ----
-git clone --recursive --branch <TAGNAME> <BASEURL>/ammos-anms.git
+git clone --recursive --branch <TAGNAME> https://github.com/NASA-AMMOS/anms.git
 ----
 . Optional: switching to a different tag or branch can be done with the sequence:
 +
@@ -410,15 +469,10 @@ git clone --recursive --branch <TAGNAME> <BASEURL>/ammos-anms.git
 git checkout <TAGNAME>
 git submodule update --init --recursive
 ----
-. If necessary, add the local user to the `docker` access group with:
-+
-----
-sudo usermod -a -G docker ${USER}
-----
 . The container image building is then executed with:
 +
 ----
-export DOCKER_IMAGE_PREFIX=<DOCKERURL>
+export DOCKER_IMAGE_PREFIX=<REPOURL>
 export DOCKER_IMAGE_TAG=latest
 ./build.sh buildonly
 ----
@@ -585,7 +639,7 @@ In many fault cases, the procedure will work for the first steps and then fail o
 This is taken advantage of for the purposes of troubleshooting and failure reporting; the specific procedure(s) run and step(s) that fail are valuable to include in issue reports related to the ANMS.
 
 To make the procedures more readable, the ANMS host is assumed to have the resolveable host name `anms-serv`.
-For checkout steps ocurring on a "client host" it is assumed to be running RHEL-8 or equivalent from the perspective of commands available.
+For checkout steps ocurring on a "client host" it is assumed to be running RHEL-9 or equivalent from the perspective of commands available.
 
 
 [#sec-checkout-frontend]
@@ -600,7 +654,7 @@ The checkout procedure is as follows:
 ----
 sudo firewall-cmd --zone public --list-services
 ----
-which should include the servies "https".
+which should include the services "https".
 . From a client host check the port is open with:
 +
 ----
@@ -673,7 +727,7 @@ The checkout procedure is as follows:
 sudo firewall-cmd --zone public --list-services
 ----
 which should include the services "ltp" and "dtn-bundle-udp".
-. From any RHEL-8 host on the agent network run the following:
+. From any RHEL-9 host on the agent network run the following:
 +
 ----
 sudo nmap anms-serv -sU -p4556
