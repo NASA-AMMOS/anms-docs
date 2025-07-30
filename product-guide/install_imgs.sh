@@ -20,16 +20,32 @@
 ## the prime contract 80NM0018D0004 between the Caltech and NASA under
 ## subcontract 1658085.
 ##
+SRCDIR=$1
+OUTDIR=$2
+DBOOKFILE=$3
 
-# Build documentation artifacts in a "build" directory.
-set -e
-
-SELFDIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
-
-cd ${SELFDIR}
-cmake -S . -B build
-cmake --build build $@
-if [ -n "${DESTDIR}" ]
+if [ -z "${DBOOKFILE}" ]
 then
-    cmake --install build
+    FILENAMES=""
+    for HTMLFILE in ${OUTDIR}/*.html
+    do
+	echo "Scanning ${HTMLFILE}"
+	THESENAMES=$(xmlstarlet sel -N xhtml=http://www.w3.org/1999/xhtml -t -v '//xhtml:img/@src' -n "${HTMLFILE}")
+	FILENAMES="${FILENAMES} ${THESENAMES}"
+    done
+else
+    FILENAMES=$(xmlstarlet sel -N db=http://docbook.org/ns/docbook -t -v '//db:imagedata/@fileref' -n "${DBOOKFILE}")
 fi
+
+for FN in ${FILENAMES}
+do
+    SRCFN="${SRCDIR}/${FN}"
+    if [ ! -f "${SRCFN}" ]
+    then
+        continue
+    fi
+    
+    DSTFN="${OUTDIR}/${FN}"
+    echo "Install to ${DSTFN}"
+    install -Dp -m644 "${SRCFN}" "${DSTFN}"
+done

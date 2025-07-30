@@ -1,5 +1,5 @@
 #[[
-Copyright (c) 2023 The Johns Hopkins University Applied Physics
+Copyright (c) 2023-2025 The Johns Hopkins University Applied Physics
 Laboratory LLC.
 
 This file is part of the Asynchronous Network Management System (ANMS).
@@ -35,6 +35,11 @@ set(ADOC_EXTRAS
 
 
 find_program(ASCIIDOC asciidoctor REQUIRED)
+find_program(ASPELL aspell)
+if(NOT ASPELL)
+    message(FATAL_ERROR "Program aspell not found")
+endif()
+
 set(OUT_DOCINFO "docinfo.xml")
 configure_file(
   "${CMAKE_CURRENT_SOURCE_DIR}/${OUT_DOCINFO}.in"
@@ -53,10 +58,11 @@ add_custom_command(
     ${ADOC_SOURCE}
 )
 # Place source images into build directory
+set(INSTALL_IMGS ${CMAKE_CURRENT_SOURCE_DIR}/install_imgs.sh)
 add_custom_target(
   ${PROJECT_NAME}-img-bin
-  DEPENDS ${CMAKE_SOURCE_DIR}/install_imgs.sh ${OUT_DBOOK}
-  COMMAND ${CMAKE_SOURCE_DIR}/install_imgs.sh ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${OUT_DBOOK}
+  DEPENDS ${INSTALL_IMGS} ${OUT_DBOOK}
+  COMMAND ${INSTALL_IMGS} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${OUT_DBOOK}
 )
 
 find_program(XSLTPROC xsltproc REQUIRED)
@@ -73,8 +79,8 @@ add_custom_command(
 # Place needed images into HTML tree
 add_custom_target(
   ${PROJECT_NAME}-img-html
-  DEPENDS ${CMAKE_SOURCE_DIR}/install_imgs.sh ${OUT_HTML} ${PROJECT_NAME}-img-bin
-  COMMAND ${CMAKE_SOURCE_DIR}/install_imgs.sh ${CMAKE_CURRENT_BINARY_DIR} "${CMAKE_CURRENT_BINARY_DIR}/html"
+  DEPENDS ${INSTALL_IMGS} ${OUT_HTML} ${PROJECT_NAME}-img-bin
+  COMMAND ${INSTALL_IMGS} ${CMAKE_CURRENT_BINARY_DIR} "${CMAKE_CURRENT_BINARY_DIR}/html"
 )
 add_custom_target(
   ${PROJECT_NAME}-html ALL
@@ -86,6 +92,34 @@ install(
 )
 
 
+# spellcheck on HTML output
+set(DICTIONARY_TXT "${CMAKE_CURRENT_SOURCE_DIR}/dictionary.txt")
+set(SPELLCHECK_XSL "${CMAKE_CURRENT_SOURCE_DIR}/spellcheck.xsl")
+set(MISSPELLING_TXT "misspelling.txt")
+add_custom_command(
+    OUTPUT "dictionary.cwl"
+    DEPENDS "${DICTIONARY_TXT}"
+    COMMAND cat "${DICTIONARY_TXT}" |
+        ${ASPELL} --lang=en create master "./dictionary.cwl"
+)
+add_custom_command(
+    OUTPUT "${MISSPELLING_TXT}"
+    DEPENDS "${OUT_HTML}" "${SPELLCHECK_XSL}" "dictionary.cwl"
+    COMMAND ${XMLSTARLET} tr "${SPELLCHECK_XSL}" "${OUT_HTML}" |
+        ${ASPELL} --mode=html --lang=EN_US --extra-dicts=./dictionary.cwl list |
+        sort | uniq > "${MISSPELLING_TXT}"
+)
+add_custom_target(
+    ${PROJECT_NAME}-misspelling ALL
+    DEPENDS "${MISSPELLING_TXT}"
+    COMMAND cat "${MISSPELLING_TXT}"
+    # success means file is present and empty
+    COMMAND test -f "${MISSPELLING_TXT}" -a ! -s "${MISSPELLING_TXT}"
+    COMMENT "Checking ${MISSPELLING_TXT}"
+)
+
+
+# PDF document output
 find_program(DBLATEX dblatex REQUIRED)
 set(PDF_XSLT "${CMAKE_CURRENT_SOURCE_DIR}/pdf-opts.xsl")
 set(OUT_PDF "manual.pdf")

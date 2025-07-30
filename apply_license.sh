@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 ##
 ## Copyright (c) 2023-2025 The Johns Hopkins University Applied Physics
 ## Laboratory LLC.
@@ -21,15 +21,40 @@
 ## subcontract 1658085.
 ##
 
-# Build documentation artifacts in a "build" directory.
+# Apply copyright and license markings to source files.
+#
+# Requires installation of:
+#  pip3 install licenseheaders
+# Run as:
+#  ./apply_license.sh {specific dir}
+#
 set -e
 
 SELFDIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 
-cd ${SELFDIR}
-cmake -S . -B build
-cmake --build build $@
-if [ -n "${DESTDIR}" ]
+LICENSEOPTS="${LICENSEOPTS} --tmpl ${SELFDIR}/apply_license.tmpl"
+LICENSEOPTS="${LICENSEOPTS} --years 2023-$(date +%Y)"
+# Excludes only apply to directory (--dir) mode and not file mode
+#LICENSEOPTS="${LICENSEOPTS} --exclude *.yml "
+
+
+# Specific paths
+if [[ $# -gt 0 ]]
 then
-    cmake --install build
+    echo "Applying markings to selected $@ ..."
+    licenseheaders ${LICENSEOPTS} --dir $@
+    exit 0
 fi
+
+
+echo "Applying markings to source..."
+# Directory trees
+for DIRNAME in product-guide user-guide .github
+do
+    licenseheaders ${LICENSEOPTS} --dir ${SELFDIR}/${DIRNAME}
+done
+# Specific top-level files
+for FILEPATH in $(find "${SELFDIR}" -maxdepth 1 -type f)
+do
+    licenseheaders ${LICENSEOPTS} --file ${FILEPATH}
+done
