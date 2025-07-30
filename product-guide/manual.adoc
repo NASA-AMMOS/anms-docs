@@ -118,7 +118,7 @@ The network protocol used for inter-container communication and for BP convergen
 |DOC-005446
 
 |ANMS User Guide[[anms-user-guide,ANMS User Guide]]
-|DOC-005443 rev A
+|DOC-005443 rev B
 
 |===
 
@@ -134,8 +134,8 @@ The network protocol used for inter-container communication and for BP convergen
 |Installing Bolt[[puppet-bolt]]
 |https://www.puppet.com/docs/bolt/latest/bolt_installing.html#install-bolt-on-rhel[puppet-bolt]
 
-|Using SELinux[[rhel8-selinux]]
-|https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/pdf/using_selinux/red_hat_enterprise_linux-8-using_selinux-en-us.pdf[rhel8-selinux]
+|Using SELinux[[rhel9-selinux]]
+|https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/pdf/using_selinux/red_hat_enterprise_linux-9-using_selinux-en-us.pdf[rhel9-selinux]
 
 |ANMS Source[[anms-source]]
 |https://github.com/NASA-AMMOS/anms[anms-source]
@@ -155,7 +155,7 @@ Although some of the subsystems have a preferred start-up order (to ensure initi
 
 === ANMS Components
 
-The subsystems of the ANMS (all containers) are illustrated as gray blocks within the "ANMS Instance" group in the diagram of <<fig-anms-components-protocol>>.
+The subsystems (containers) of the ANMS are illustrated as gray blocks within the "ANMS Instance" group in the diagram of <<fig-anms-components-protocol>>.
 The entire ANMS instance is made to be run on a single host, with future plans to allow installing in a more distributed environment.
 Currently the ANMS provides security at the boundary of the instance but not between containers (see <<sec-security>> for details), which would be required for a distributed installation.
 
@@ -197,6 +197,10 @@ Specific procedures for performing an installation using a local Puppet apply ar
 Conditions for installing the ANMS are a host with packages identified in <<target-host-packages>>, at least 7{nbsp}GiB of filesystem space for container image storage, and additional space for long-term data warehouse storage.
 The total amount of storage needed depends on the mission use of reports, specifically the average size and rate of reported data.
 
+NOTE: Usage of podman is recommended. Docker should continue to function as a drop-in replacement, however only podman deployments will be directly supported by the ANMS team.
+
+NOTE: It is recommended to use docker-compose (which is fully compatible with podman). docker-compose is a distinct package from Docker, while podman-compose is a fully compatible alternative.  Older versions of compose were called directly (ie: `docker-compose`), while current versions are invoked as a subcommand (ie: `docker compose` or `podman compose`). 
+
 [#target-host-packages]
 .Target host packages
 [%header,width=75%,cols=2*]
@@ -205,10 +209,10 @@ The total amount of storage needed depends on the mission use of reports, specif
 |Version Minimum
 
 |podman
-|5.2
+|5.2+
 
-|podman-compose
-|1.0
+|docker-compose (preferred)  OR podman-compose.
+|2.29+ OR 5.3+
 
 |systemd
 |252
@@ -228,8 +232,9 @@ In any case, deployment and configuration of CAM itself is outside the scope of 
 [#sec-deployment-camemu]
 ==== Using a CAM Gateway Emulator
 
-To allow the ANMS to be tested in environments where a CAM Server is unavailable or too burdensome to set up, the ANMS can be built with an emulator of the CAM Gateway which uses static accounts, credentials, and access controls.
-The environment `AUTHNZ_EMU=demo` during a build (see <<sec-proc-build>>) enables the CAM Gateway emulator behavior.
+To allow the ANMS to be tested in environments where a CAM Server is unavailable or too burdensome to set up, the ANMS can be built with an emulator of the CAM Gateway which uses static accounts, credentials, and access controls.  This is now known as the "demo" configuration.
+
+Auth mode is determined by the environment variable `AUTHNZ_EMU` during build  (see <<sec-proc-build>>).  Set `AUTHNZ_EMU=cam-gateway` to utilize the CAM Server, or `AUTHNZ_EMU=demo` to utilize the CAM Gateway emulation (a basic authentication demo configuration).
 
 CAUTION: The CAM Gateway emulator is for demonstration only and must not be present in a production installation.
 
@@ -254,6 +259,7 @@ The CAM Gateway reverse proxy for authentication, authorization, and auditing \(
 This container uses the external `ammos-tls` volume for TLS configuration (see <<sec-proc-install-tls>>).
 This provides HTTP routing access is to `anms-ui`, `anms-core`, and `grafana` containers.
 Exposes TCP port 443 for HTTPS and 80 for HTTP, both mapped to the same host port numbers.
+This container can be remapped to use the cam-gateway or demo (basic http auth) configuration.
 `anms-core`::
 The ANMS backend REST services.
 Exposes TCP port 5555 for HTTP.
@@ -295,7 +301,7 @@ An intermediate service to bookkeep transcoding requests from the ANMS to the AR
 [#sec-host-files]
 === Filesystem
 
-Because the ANMS is deployed as a Podman Compose configuration, the only primary files present on the host are to configure a compose project, its use as a system service, and the system firewall.
+Because the ANMS is deployed as a Compose configuration, the only primary files present on the host are to configure the containerized project, its use as a system service, and the system firewall.
 
 The principal directories and files used by ANMS are:
 
@@ -458,6 +464,8 @@ This chapter includes specific procedures related to managing an ANMS production
 
 The ANMS source is composed of a top-level repository `anms` and a number of submodule repositories; all of them are required for building the ANMS.
 
+Before beginning, ensure that either Docker or Podman (preferred) is installed and functional on your system along with docker-compose.  A hello-world image can be run to verify functionality, ie: `docker run --rm hello-world` or `podman run --rm hello-world`.  Compose can be verified with `podman compose ps` - If compose is not properly installed it will report 'unrecognized command'
+
 . The top-level checkout can be done with:
 +
 ----
@@ -469,19 +477,24 @@ git clone --recursive --branch <TAGNAME> https://github.com/NASA-AMMOS/anms.git
 git checkout <TAGNAME>
 git submodule update --init --recursive
 ----
-. The container image building is then executed with:
+. If running rootful containers (not recommended. Podman defaults to rootless), it may be necessary to add the local user to the `docker` access group with the following. :
 +
 ----
-export DOCKER_IMAGE_PREFIX=<REPOURL>
-export DOCKER_IMAGE_TAG=latest
-./build.sh buildonly
+sudo usermod -a -G docker ${USER}
 ----
+. Update `.env` file as needed.  Fields that may need to be updated include `DOCKER_IMAGE_PREFIX` and for rootless podman the port mappings for AUTHNZ may need to be uncommented to avoid permissions issues
+. Build images using either: (Note: The podman-build-args flag is required for healthchecks to function under podman).
 +
-which by default uses the current top-level branch name as the tag for all container images.
+----
+docker compose -f docker-compose.yml -f testenv-compose.yml build
+podman compose --podman-build-args='--format docker' -f docker-compose.yml -f testenv-compose.yml build
+----
+
++
 
 [NOTE]
 ====
-To build an ANMS that uses an emulator for the CAM Gateway (which means that the ANMS will not require a CAM server), have the following environment set in the build step above:
+To build an ANMS that uses an emulator for the CAM Gateway (which means that the ANMS will not require a CAM server), have the following environment set in the build step above. (Note: The default value that uses the CAM Gateway is `cam-gateay`):
 ----
 export AUTHNZ_EMU=demo
 ----
@@ -546,12 +559,13 @@ The PEM-encoded CA bundle containing at least the CA chain used to sign the serv
 
 === Upgrading
 
-Because the ANMS is deployed as a Docker Compose configuration with associated environment variables and container images, an upgrade involves updating the compose configuration and restarting affected containers.
+Because the ANMS is deployed as a series of containers managed by compose with associated environment variables and configuration, an upgrade involves rebuilding and restarting affected containers.
 
 An upgrade can be performed using the same procedure as <<sec-proc-install>>, where Puppet will make any required changes for the upgrade and restart services and containers as necessary.
 Individual ANMS releases may identify pre-upgrade or post-upgrade steps in their specific Release Description Document (RDD).
 
-=== Resetting Docker State
+[#sec-reset-system]
+=== Resetting Container State
 
 [WARNING]
 The following will reset all database state, including user profiles, ADM configuration, and all historical report data.
@@ -560,8 +574,20 @@ This should only be used for test hosts or after performing a full Postgres DB b
 To force containers and volumes (containing long-term database files) to be cleared, a maintainer can run the following from the host.
 
 ```
-docker stop $(docker ps -q); docker rm $(docker ps -a -q); docker volume rm $(docker volume ls -q)
+podman stop --all
+podman system prune --all --volumes
 ```
+
+To verify artifacts have been removed you may use the following.  The prune command (or object-specific prune command) may need to be reissued if not all relevant artifacts have been cleared.
+
+```
+podman image ls
+podman container ls
+podman volume ls
+podman network ls
+```
+
+TIP: In some cases, issues may arise due to system cache files on the host system not being cleared (a potential issue with select podman versions). It is recommended to restart the host system after clearing objects to ensure a clean start.
 
 After clearing containers and volumes, the normal `apply_local` step of <<sec-proc-install>> should be performed to re-install and start the containers.
 
@@ -613,7 +639,7 @@ podman compose -p anms logs [service-name]
 [#sec-proc-mon-selinux]
 ==== SELinux Audit Events
 
-The procedures in this section are a summary of more detail provided in Chapter 5 of the RedHat <<rhel8-selinux>> document.
+The procedures in this section are a summary of more detail provided in Chapter 5 of the RedHat <<rhel9-selinux>> document.
 
 By default, the `setroubleshootd` service is running, which intercepts SELinux audit events
 
@@ -781,7 +807,6 @@ See <<sec-proc-mon-selinux>> for details on observing the audit log events.
 
 CAUTION: The SELinux permissive mode is for troubleshooting only and must not be present in a production installation.
 
-
 ==== Operations
 
 This section covers issues that can occur after successful installation (see <<sec-proc-install>>) and checkout (see <<sec-checkout>>) of the ANMS.
@@ -790,11 +815,13 @@ This section covers issues that can occur after successful installation (see <<s
 
 If the Grafana panels in the `Monitor` tab displays `Connection was reset` errors, the Grafana container may not have started successfully. 
 
-Restart the container with `docker-compose up grafana` (run from within the `anms/` folder). 
+Restart the container with `podman compose up grafana` (run from within the `anms/` folder). 
 
 If restarting the container does not resolve the problem, and the Grafana startup 
 contains errors related to only having read-only access to the database, permissions on 
 various files in the source code will need to be updated for Grafana to run. 
+
+The following permissions example is for typical rootful Docker systems. Rootless podman may require different permissions.
 
 For both the `docker_data/grafana_vol/` folder and the `docker_data/grafana_vol/grafana.db` 
 file, change the group to `docker` and the permissions to `777`: 
@@ -806,13 +833,13 @@ $ sudo chmod 777 docker_data/grafana_vol
 $ sudo chmod 777 docker_data/grafana_vol/grafana.db
 ```
 
-After changing these permissions, run `docker-compose up grafana` again, and the Grafana container should start successfully.
+After changing these permissions, run `podman compose up grafana` again, and the Grafana container should start successfully.
 
 ===== Agent Registration Issues on ANMS Startup
 
 If an Agent is not present in the `Agents` tab on start up, it is likely due to an error in one of the ION containers and their connection to the underlying database. 
 
-To resolve the issue, restart the ION containers using `docker-compose restart n1 n2`.
+To resolve the issue, restart the ION containers using `podman compose restart n1 n2`.
 
 ===== New Agent Registration Issues
 
@@ -845,8 +872,7 @@ With ANMS running, go to `localhost:8080` and log in to the database with:
 ===== ANMS-UI is not visible at hostname:9030
 
 This error may indicate that the anms-ui docker is experiencing issues receiving HTTP requests.
-This is most likely related to the `host` or `bind address` specified in `anms-ui/server/shared/config.py`,
-or an environment variable that overrides this.
+This is most likely related to the `host` or `bind address` specified in `anms-ui/server/shared/config.py`,  an environment variable that overrides this, or a firewall issue.
 
 ===== ANMS-UI is not visible at hostname
 
@@ -856,6 +882,74 @@ http://hostname does not render the same page, this indicates an issue with the 
 Check the status of the `authnz` container in the compose services list.
 It may be necessary to restart the container using:
 `sudo podman compose -p anms restart authnz`. 
+
+Port numbers can be overridden through environment variables (see .env file). Check that ports are mapped to the expected ports and are not being blocked by your system's firewall (if applicable).
+
+When running rootless podman the container may fail to start if the user does not have permission to bind on the configured port(s). Users typically cannot bind to low numbered ports, including 80 (http) and 443 (https).  If this is the issue, try to set AUTHNZ_PORT and AUTHNZ_HTTPS_PORT to higher values and test at the specified port (ie: In .env set AUTHNZ_PORT=9080 and test at http://hostname:9080).  
+
+Check that the authnz container is running with `podman compose ps`.
+
+Logs can be viewed with `podman compose logs authnz` to identify potential issues.
+
+
+===== Other container startup issues
+
+Following an upgrade or failed installation step, it is possible for the system to be in an inconsistent state resulting in containers failing to start, initialize properly, or using outdated caches.
+
+As a first debug step, it is recmmended to fully restart the host system and all containers. If that fails to resolve the issue, backup any existing data and proceed with a full reset of your installation files.  See <<sec-reset-system>> for details and ensure you restart the host system prior to rebuilding.
+
+==== Advanced
+
+[#sec-volume-mount-tip]
+===== Override Configuration Files with Volume Mounts
+
+It is sometimes necessary to override configuration files or scripts built into the container environment. Volume mounts can be used override select files or directories without rebuilding containers.
+
+For example, to override the ION NM Manager configuration file add the following to the `volumes section of `ion-manager` in `docker-compose.yml`.  Adjust the source file to any relative or absolute path desired.  For this change to take effect, you must restart all containers with `podman compose down` and then restart with `podman compose up`. Simply restarting the affected contaner may not refresh changes made to the compose file.
+
+```
+      - ./ion/configs/simple-2-node/mgr.rc:/etc/ion.rc
+```
+
+This approach can also be used to override sample agent configurations (see agent-compose.yml), extend authentication settings in the selected auth container, or for developers to quickly test changes.
+
+===== General Networking Issues
+
+If services cannot be accessed from remote machines, verify that it is not being blocked by your system's firewall.
+
+In rare cases, it may be useful to utilize Wireshark or Tshark to verify network traffic within the containers, particularly if debugging NM agents within the container network. The following is a quick guide to installing and running these tools within the container if you do not have the ability to view activity from the host system.  This example is for the ion-manager container, but can be adapted to any. 
+
+To temporarily install in the ion-manager container run `podman compose exec ion-manager yum install tshark`.  Alternatively, modify the ion/Dockerfile to permanently add it to your installation and rebuild.  It can then be run with `podman compose exec ion-manager tshark -i any`, with tshark arguments modified as needed.
+
+To use the GUI wireshark, install with `podman compose exec ion-manager yum install wireshark`.  To easily run, create a file `novnc-compose.yml` with the definition below.  Start it with `podman compose -f novnc-compose.yml up`. From the shell run `podman compose exec ion-manager bash` followed by `DISPLAY=novnc:0.0 wireshark` to launch wireshark in the VNC session acessible from http://hostname:9081
+
+```
+# noVNC provides browser access to network to aide debugging.
+# This container is NOT intended for production usage.
+
+networks:
+  # This network is created by docker-compose.yml
+  default:
+    name: ${DOCKER_CTR_PREFIX}anms
+    external: true
+
+services:
+  novnc:
+    image: chrome-novnc
+    build:
+      dockerfile: novnc.Dockerfile
+    environment:
+      # Adjust to your screen size
+      - DISPLAY_WIDTH=1920
+      - DISPLAY_HEIGHT=1080
+      - RUN_XTERM=yes
+    ports:
+      - "9081:8080"
+```
+
+See <<sec-volume-mount-tip>> for an example of volume mounting a local directory for easier saving of captures for later analysis.  In this case, you may wish to mount a directory instead of a single file, such as `- ./logs:/logs` and append to the tshark command `-w /logs/log.pcap`
+
+
 
 
 [#sec-contact]

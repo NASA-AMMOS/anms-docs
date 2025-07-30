@@ -46,4 +46,11 @@ subcontract 1658085.
       Updates for ANMS v1.1.0
     </revdescription>
   </revision>
+  <revision>
+    <revnumber>B</revnumber>
+    <date>31 July 2025</date>
+    <revdescription>
+      Updates for ANMS v2.0
+    </revdescription>
+  </revision>
 </revhistory>
