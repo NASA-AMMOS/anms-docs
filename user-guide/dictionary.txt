@@ -4,6 +4,7 @@ ADMs
 AMMOS
 anms
 ANMS
+APL
 ari
 Ari
 ARI
@@ -15,6 +16,7 @@ AxiosError
 ben
 browseable
 Caltech
+CBOR
 checkboxes
 CLI
 cmd
@@ -29,9 +31,13 @@ filesystem
 grafana
 Grafana
 Grafanas
+ipn
+JHU
 JPL
+JSON
 LexToken
 LLC
+md
 MGSS
 MMCS
 msg
