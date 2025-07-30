@@ -72,7 +72,7 @@ The source or destination of a BP bundle.
 Container::
 An isolated unit of runtime state within a host.
 Convergence Layer Adapter (CLA)::
-The mechanims used to transport bundles within an underlay (IP) network.
+A specific mechanism used to transport bundles within an underlay (IP) network.
 Endpoint ID (EID)::
 The identifier of a BP Endpoint; names the source and destination for a BP bundle.
 Host::
@@ -157,7 +157,7 @@ Although some of the subsystems have a preferred start-up order (to ensure initi
 
 The subsystems (containers) of the ANMS are illustrated as gray blocks within the "ANMS Instance" group in the diagram of <<fig-anms-components-protocol>>.
 The entire ANMS instance is made to be run on a single host, with future plans to allow installing in a more distributed environment.
-Currently the ANMS provides security at the boundary of the instance but not between comtainers (see <<sec-security>> for details), which would be required for a distributed installation.
+Currently the ANMS provides security at the boundary of the instance but not between containers (see <<sec-security>> for details), which would be required for a distributed installation.
 
 A higher-level logical view of the ANMS is shown in <<fig-anms-components-logical>> where some of the internal infrastructure containers (e.g., PostgreSQL database, MQTT broker) are removed for clarity.
 
@@ -199,7 +199,7 @@ The total amount of storage needed depends on the mission use of reports, specif
 
 NOTE: Usage of podman is recommended. Docker should continue to function as a drop-in replacement, however only podman deployments will be directly supported by the ANMS team.
 
-NOTE: It is recommended to use docker-compose (which is fully compatible with podman). docker-compose is a distinct package from Docker, while podman-compose is a fully compatible alternative.  Older versions of compose were called directly (ie: `docker-compose`), while current versions are invoked as a subcommand (ie: `docker compose` or `podman compose`). 
+NOTE: It is recommended to use docker-compose (which is fully compatible with podman). docker-compose is a distinct package from Docker, while podman-compose is a fully compatible alternative.  Older versions of compose were called directly (_i.e._, `docker-compose`), while current versions are invoked as a sub-command (_i.e._, `docker compose` or `podman compose`). 
 
 [#target-host-packages]
 .Target host packages
@@ -354,7 +354,7 @@ Its contents for ANMS are:
 `private/ammos-server-key.pem`:::
 The private key for the local TLS endpoint.
 `certs/ammos-server-cert.pem`:::
-The corresponding public key certificiate for the local TLS endpoint.
+The corresponding public key certificate for the local TLS endpoint.
 `certs/ammos-ca-bundle.crt`:::
 The trusted CA bundle for all TLS endpoints (including users).
 
@@ -464,7 +464,7 @@ This chapter includes specific procedures related to managing an ANMS production
 
 The ANMS source is composed of a top-level repository `anms` and a number of submodule repositories; all of them are required for building the ANMS.
 
-Before beginning, ensure that either Docker or Podman (preferred) is installed and functional on your system along with docker-compose.  A hello-world image can be run to verify functionality, ie: `docker run --rm hello-world` or `podman run --rm hello-world`.  Compose can be verified with `podman compose ps` - If compose is not properly installed it will report 'unrecognized command'
+Before beginning, ensure that either Docker or Podman (preferred) is installed and functional on your system along with docker-compose.  A hello-world image can be run to verify functionality, _i.e._ `docker run --rm hello-world` or `podman run --rm hello-world`.  Compose can be verified with `podman compose ps` - If compose is not properly installed it will report 'unrecognized command'
 
 . The top-level checkout can be done with:
 +
@@ -477,13 +477,13 @@ git clone --recursive --branch <TAGNAME> https://github.com/NASA-AMMOS/anms.git
 git checkout <TAGNAME>
 git submodule update --init --recursive
 ----
-. If running rootful containers (not recommended. Podman defaults to rootless), it may be necessary to add the local user to the `docker` access group with the following. :
+. If running containers as the root user (not recommended. Podman defaults to rootless), it may be necessary to add the local user to the `docker` access group with the following. :
 +
 ----
 sudo usermod -a -G docker ${USER}
 ----
-. Update `.env` file as needed.  Fields that may need to be updated include `DOCKER_IMAGE_PREFIX` and for rootless podman the port mappings for AUTHNZ may need to be uncommented to avoid permissions issues
-. Build images using either: (Note: The podman-build-args flag is required for healthchecks to function under podman).
+. Update `.env` file as needed.  Fields that may need to be updated include `DOCKER_IMAGE_PREFIX` and for rootless podman the port mappings for AUTHNZ may need to be un-commented to avoid permissions issues
+. Build images using either: (Note: The podman-build-args flag is required for health checks to function under podman).
 +
 ----
 docker compose -f docker-compose.yml -f testenv-compose.yml build
@@ -506,7 +506,7 @@ export AUTHNZ_EMU=demo
 The ANMS uses Puppet version 7 <<puppet-agent>> to install requisite system packages and configure system files and services.
 In addition, Bolt <<puppet-bolt>> is needed to install needed Puppet modules and run the Puppet agent remotely.
 
-CAUTION: The example TLS configuration in this proceure is for demonstration only and must not be present in a production installation.
+CAUTION: The example TLS configuration in this procedure is for demonstration only and must not be present in a production installation.
 Details for creating a proper TLS volume are in <<sec-proc-install-tls>>.
 
 To install the ANMS on the local host perform the following:
@@ -627,7 +627,7 @@ The state of all containers in the ANMS project can be observed with:
 ```
 podman compose -p anms ps
 ```
-which will report a "State" column either as "Up" for simple servcies or "Up (healthy)" for health-checked services.
+which will report a "State" column either as "Up" for simple services or "Up (healthy)" for health-checked services.
 
 
 And observing logs from specific containers requires running a command similar to:
@@ -665,7 +665,7 @@ In many fault cases, the procedure will work for the first steps and then fail o
 This is taken advantage of for the purposes of troubleshooting and failure reporting; the specific procedure(s) run and step(s) that fail are valuable to include in issue reports related to the ANMS.
 
 To make the procedures more readable, the ANMS host is assumed to have the resolveable host name `anms-serv`.
-For checkout steps ocurring on a "client host" it is assumed to be running RHEL-9 or equivalent from the perspective of commands available.
+For checkout steps occurring on a "client host" it is assumed to be running RHEL-9 or equivalent from the perspective of commands available.
 
 
 [#sec-checkout-frontend]
@@ -821,7 +821,8 @@ If restarting the container does not resolve the problem, and the Grafana startu
 contains errors related to only having read-only access to the database, permissions on 
 various files in the source code will need to be updated for Grafana to run. 
 
-The following permissions example is for typical rootful Docker systems. Rootless podman may require different permissions.
+The following permissions example is for typical a Docker system with its privileged daemon.
+Rootless podman may require different permissions.
 
 For both the `docker_data/grafana_vol/` folder and the `docker_data/grafana_vol/grafana.db` 
 file, change the group to `docker` and the permissions to `777`: 
@@ -833,8 +834,7 @@ $ sudo chmod 777 docker_data/grafana_vol
 $ sudo chmod 777 docker_data/grafana_vol/grafana.db
 ```
 
-After changing these permissions, run `podman compose up grafana` again, and the Grafana
-container should start sucessfully.
+After changing these permissions, run `podman compose up grafana` again, and the Grafana container should start successfully.
 
 ===== Agent Registration Issues on ANMS Startup
 
@@ -886,7 +886,7 @@ It may be necessary to restart the container using:
 
 Port numbers can be overridden through environment variables (see .env file). Check that ports are mapped to the expected ports and are not being blocked by your system's firewall (if applicable).
 
-When running rootless podman the container may fail to start if the user does not have permission to bind on the configured port(s). Users typically cannot bind to low numbered ports, including 80 (http) and 443 (https).  If this is the issue, try to set AUTHNZ_PORT and AUTHNZ_HTTPS_PORT to higher values and test at the specified port (ie: In .env set AUTHNZ_PORT=9080 and test at http://hostname:9080).  
+When running rootless podman the container may fail to start if the user does not have permission to bind on the configured port(s). Users typically cannot bind to low numbered ports, including 80 (http) and 443 (https).  If this is the issue, try to set AUTHNZ_PORT and AUTHNZ_HTTPS_PORT to higher values and test at the specified port (_i.e._, In .env set AUTHNZ_PORT=9080 and test at http://hostname:9080).  
 
 Check that the authnz container is running with `podman compose ps`.
 
@@ -897,7 +897,7 @@ Logs can be viewed with `podman compose logs authnz` to identify potential issue
 
 Following an upgrade or failed installation step, it is possible for the system to be in an inconsistent state resulting in containers failing to start, initialize properly, or using outdated caches.
 
-As a first debug step, it is recmmended to fully restart the host system and all containers. If that fails to resolve the issue, backup any existing data and proceed with a full reset of your installation files.  See <<sec-reset-system>> for details and ensure you restart the host system prior to rebuilding.
+As a first debug step, it is recommended to fully restart the host system and all containers. If that fails to resolve the issue, backup any existing data and proceed with a full reset of your installation files.  See <<sec-reset-system>> for details and ensure you restart the host system prior to rebuilding.
 
 ==== Advanced
 
@@ -906,7 +906,7 @@ As a first debug step, it is recmmended to fully restart the host system and all
 
 It is sometimes necessary to override configuration files or scripts built into the container environment. Volume mounts can be used override select files or directories without rebuilding containers.
 
-For example, to override the ION NM Manager configuration file add the following to the `volumes section of `ion-manager` in `docker-compose.yml`.  Adjust the source file to any relative or absolute path desired.  For this change to take effect, you must restart all containers with `podman compose down` and then restart with `podman compose up`. Simply restarting the affected contaner may not refresh changes made to the compose file.
+For example, to override the ION NM Manager configuration file add the following to the `volumes section of `ion-manager` in `docker-compose.yml`.  Adjust the source file to any relative or absolute path desired.  For this change to take effect, you must restart all containers with `podman compose down` and then restart with `podman compose up`. Simply restarting the affected container may not refresh changes made to the compose file.
 
 ```
       - ./ion/configs/simple-2-node/mgr.rc:/etc/ion.rc
@@ -922,7 +922,7 @@ In rare cases, it may be useful to utilize Wireshark or Tshark to verify network
 
 To temporarily install in the ion-manager container run `podman compose exec ion-manager yum install tshark`.  Alternatively, modify the ion/Dockerfile to permanently add it to your installation and rebuild.  It can then be run with `podman compose exec ion-manager tshark -i any`, with tshark arguments modified as needed.
 
-To use the GUI wireshark, install with `podman compose exec ion-manager yum install wireshark`.  To easily run, create a file `novnc-compose.yml` with the definition below.  Start it with `podman compose -f novnc-compose.yml up`. From the shell run `podman compose exec ion-manager bash` followed by `DISPLAY=novnc:0.0 wireshark` to launch wireshark in the VNC session acessible from http://hostname:9081
+To use the GUI wireshark, install with `podman compose exec ion-manager yum install wireshark`.  To easily run, create a file `novnc-compose.yml` with the definition below.  Start it with `podman compose -f novnc-compose.yml up`. From the shell run `podman compose exec ion-manager bash` followed by `DISPLAY=novnc:0.0 wireshark` to launch wireshark in the VNC session accessible from http://hostname:9081
 
 ```
 # noVNC provides browser access to network to aide debugging.

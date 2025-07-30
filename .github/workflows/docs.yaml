@@ -1,5 +1,5 @@
 ##
-## Copyright (c) 2023 The Johns Hopkins University Applied Physics
+## Copyright (c) 2023-2025 The Johns Hopkins University Applied Physics
 ## Laboratory LLC.
 ##
 ## This file is part of the Asynchronous Network Management System (ANMS).
@@ -43,6 +43,7 @@ jobs:
           submodules: recursive
       - name: Set up OS
         run: |
+          sudo rm /var/lib/man-db/auto-update
           sudo apt-get update && sudo apt-get install -y cmake make coreutils ruby asciidoctor graphviz inkscape dblatex docbook-xsl-ns xsltproc xmlstarlet
           sudo gem install asciidoctor-diagram
       - name: Build

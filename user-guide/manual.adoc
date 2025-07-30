@@ -82,7 +82,7 @@ A device being managed by the ANMS, but separate from the ANMS itself.
 All agents must be accessible via some network, but not necessarily an IP network.
 UI Terminology::
 Link:::
-A browsable item within a web page which accesses a specific item on the same page or a different page.
+A browseable item within a web page which accesses a specific item on the same page or a different page.
 Redirect:::
 An automatic change in the current web page caused by some action on the current page.
 Select:::
@@ -356,7 +356,7 @@ image::images/agent-manage.png[]
 
 From this Agent management menu, the user can:
 1. Generate a new ARI to send to the agent(s)
-1. Send a prebuilt string ARI to the agent(s)
+1. Send a pre-built string ARI to the agent(s)
 
 [#fig-agent-manage-menu]
 .The Agent Management Menu
@@ -369,9 +369,9 @@ A user will be able to preview the generated ARI before sending it to the agent(
 .The Agent Management Preview ARI
 image::images/agent-manage-ari-done.png[]
 
-[#fig-agent-manage-wating]
+[#fig-agent-manage-waiting]
 .The Agent Management Waiting Indicator
-image::images/agent-manage-wating.png[]
+image::images/agent-manage-waiting.png[]
 
 After the ARI is translated and successfully sent to the manager to be forwarded to the agent(s), a status toast will be displayed.
 
@@ -513,7 +513,7 @@ The transcoded ARI table provides the following information:
 | The CBOR generated from the Input String.
 | Hex
 | 0x8464696574666B64746E6D612D6167656E74236A6E756D2D6D73672D7478
-| Agent-parsable ARI.
+| Agent-parseable ARI.
 
 | Ari
 | Details regarding ARI parsing from the transcoder. 
@@ -566,12 +566,12 @@ Selecting the "Get ADMs" button, a user can refresh the table of supported ADMs.
 .Supported ADMs
 image::images/adms-table.png[]
 
-==== Downlaoding ADMs
+==== Downloading ADMs
 
 Selecting an ADM's name will download the associated yang file.
 
 [#fig-adm-download]
-.Downlaoding ADM
+.Downloading ADM
 image::images/adms-download.png[]
 
 
@@ -601,7 +601,7 @@ This sample workflow shows the construction of a custom panel to view a report v
 but can be modified to plot any data points of interest within the ANMS UI.
 
 In this example, the user wants to know the number of times a report message is sent by a particular agent. 
-This can be achieved using Graphana to plot the `num-msg-rx` EDD defined in the dtnma-agent ADM. An execution set containing the `(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx")` control would of had to be sent to the agent to generate these results.  This example uses the execution set `ari:/EXECSET/n=1234;(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx"))` 
+This can be achieved using Grafana to plot the `num-msg-rx` EDD defined in the dtnma-agent ADM. An execution set containing the `(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx")` control would of had to be sent to the agent to generate these results.  This example uses the execution set `ari:/EXECSET/n=1234;(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx"))` 
 
 Grafana uses SQL queries to pull data from the ANMS database and display it to the user. 
 
@@ -695,7 +695,7 @@ Next, the parameters for the control must be chosen. Select the object to be pop
 .Search for objects 
 image::images/rptt-search.png[]
 
-For this sample workflow, the `num-exec-succeeded` EDD is seleceted with the `Inspect` control.
+For this sample workflow, the `num-exec-succeeded` EDD is selected with the `Inspect` control.
 
 [#fig-rptt-selected]
 .Full execution set with inspect control

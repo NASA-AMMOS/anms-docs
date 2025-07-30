@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 ##
 ## Copyright (c) 2023-2025 The Johns Hopkins University Applied Physics
 ## Laboratory LLC.
@@ -20,16 +20,8 @@
 ## the prime contract 80NM0018D0004 between the Caltech and NASA under
 ## subcontract 1658085.
 ##
-
-# Build documentation artifacts in a "build" directory.
 set -e
+SELFDIR=$(readlink -f $(dirname "${BASH_SOURCE[0]}"))
 
-SELFDIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
-
-cd ${SELFDIR}
-cmake -S . -B build
-cmake --build build $@
-if [ -n "${DESTDIR}" ]
-then
-    cmake --install build
-fi
+cat ${SELFDIR}/dictionary.txt | sort | uniq >${SELFDIR}/dictionary-sort.txt
+mv ${SELFDIR}/dictionary-sort.txt ${SELFDIR}/dictionary.txt
