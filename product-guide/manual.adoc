@@ -171,22 +171,35 @@ graphviz::anms-components-protocol.gv[format=svg]
 .ANMS Primary Components with Logical Associations
 graphviz::anms-components-logical.gv[format=svg]
 
+==== Light Components
+
+A lightweight ("light") configuration of the ANMS involves removing containers related to web browser user interfaces, including the `anms-ui` file server and its `redis` cache, the `grafana` plotting UI and its renderer, the `adminer` database inspection UI, and the OpenSearch dashboard UI.
+
+This is depicted in the set of containers in the diagram of <<fig-anms-light-protocol>>.
+The expectation of this light configuration is that there will not be a web browser user agent interacting with the ANMS, but instead some HTTP client application operated by another operations/management system external to ANMS.
+
+In the light configuration, the ANMS will still support loading of ADMs needed to operate the transcoder service, sending immediate execution messages to agents, receiving and archiving report messages from agents, and allowing direct access to report contents as well as the postgres data warehouse (which would normally be used by the Grafana plotting UI).
+
+[#fig-anms-light-protocol]
+.ANMS Light Components with Protocol Associations
+graphviz::anms-light-protocol.gv[format=svg]
+
 
 [#sec-deployment]
 === Deployment
 
-The target host will be running the RedHat Enterprise Linux \(((RHEL))) version 8 (RHEL-8) with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
+The target host will be running the RedHat Enterprise Linux \(((RHEL))) version 9 (RHEL-9) with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
 
 The ANMS is intended to be deployed using the ((Puppet)) orchestrator, either from a local Puppet apply execution or configured from a central Puppet server.
 Part of the ANMS source is a Puppet module "anms" to automate the configuration of an ANMS deployment.
 Specific procedures for performing an installation using a local Puppet apply are in <<sec-proc-install>>.
 
-Conditions for installing the ANMS are a host with packages identified in <<target-host-packages>>, at least 7{nbsp}GiB of filesystem space for podman image storage, and additional space for long-term data warehouse storage.
+Conditions for installing the ANMS are a host with packages identified in <<target-host-packages>>, at least 7{nbsp}GiB of filesystem space for container image storage, and additional space for long-term data warehouse storage.
 The total amount of storage needed depends on the mission use of reports, specifically the average size and rate of reported data.
 
 Note: Usage of podman is recommended. Docker should continue to function as a drop-in replacement, however only podman deployments will be directly supported by the ANMS team.
 
-Note: It is recommended to use docker-compose (which is fully compatible with podman). docker-compose is a distinct package from Docker.  Older versions of compose were called directly (ie: `docker-compose`), while current versions are invoked as a subcommand (ie: `docker compose` or `podman compose`). 
+Note: It is recommended to use docker-compose (which is fully compatible with podman). docker-compose is a distinct package from Docker, while podman-compose is a fully compatible alternative.  Older versions of compose were called directly (ie: `docker-compose`), while current versions are invoked as a subcommand (ie: `docker compose` or `podman compose`). 
 
 [#target-host-packages]
 .Target host packages
@@ -196,13 +209,19 @@ Note: It is recommended to use docker-compose (which is fully compatible with po
 |Version Minimum
 
 |podman
-|5.3+
+|5.2+
 
-|docker-compose (preferred)  OR podman-compose
+|docker-compose (preferred)  OR podman-compose.
 |2.29+ OR 5.3+
+
+|systemd
+|252
 
 |Puppet
 |7
+
+|Puppet Bolt
+|4
 |===
 
 The ANMS is designed to operate on a network where the MGSS Common Access Manager (CAM) is used to manage user accounts and a CAM Gateway is used as a reverse proxy within the ANMS installation to enforce user login sessions and access permissions.
@@ -215,7 +234,7 @@ In any case, deployment and configuration of CAM itself is outside the scope of 
 
 To allow the ANMS to be tested in environments where a CAM Server is unavailable or too burdensome to set up, the ANMS can be built with an emulator of the CAM Gateway which uses static accounts, credentials, and access controls.  This is now known as the "demo" configuration.
 
-Auth mode is determined by the environment variable `AUTHNZ_EMU` during build  (see <<sec-proc-build>>).  Set `AUTHNZ_EMU=cam-gateway` to utilize the CAM Server, or `AUTHNZ_EMU=demo` to utilize the basic authentication demo configuration.
+Auth mode is determined by the environment variable `AUTHNZ_EMU` during build  (see <<sec-proc-build>>).  Set `AUTHNZ_EMU=cam-gateway` to utilize the CAM Server, or `AUTHNZ_EMU=demo` to utilize the CAM Gateway emulation (a basic authentication demo configuration).
 
 CAUTION: The CAM Gateway emulator is for demonstration only and must not be present in a production installation.
 
@@ -238,6 +257,7 @@ Exposes TCP port 8080 for HTTP.
 `authnz`::
 The CAM Gateway reverse proxy for authentication, authorization, and auditing \(((AAA))); also the endpoint of user agent TLS connections.
 This container uses the external `ammos-tls` volume for TLS configuration (see <<sec-proc-install-tls>>).
+This provides HTTP routing access is to `anms-ui`, `anms-core`, and `grafana` containers.
 Exposes TCP port 443 for HTTPS and 80 for HTTP, both mapped to the same host port numbers.
 This container can be remapped to use the cam-gateway or demo (basic http auth) configuration.
 `anms-core`::
@@ -281,21 +301,63 @@ An intermediate service to bookkeep transcoding requests from the ANMS to the AR
 [#sec-host-files]
 === Filesystem
 
-Because the ANMS is deployed as a Compose configuration, the only primary files present on the host are to configure podman/docker, its use as a system service, and the system firewall.
+Because the ANMS is deployed as a Compose configuration, the only primary files present on the host are to configure the containerized project, its use as a system service, and the system firewall.
 
-The principal files and directories used by ANMS are:
+The principal directories and files used by ANMS are:
+
+`/etc/systemd/system`::
+Directory for systemd local configuration units.
+Its contents for ANMS are:
+`podman-compose@.service`:::
+A template systemd service for all compose projects represented as files below.
+
+`/etc/containers/compose/projects`::
+Compose project top-level service configuration files.
+Each file is used by the `podman-compose@` template service.
+Its contents for ANMS are:
+`anms.env`:::
+The ANMS service configuration.
+`testenv.env`:::
+The test environment service configuration.
 
 `/ammos/anms`::
-The project-specific deployment path for compose configurations, under which are:
+The project-specific deployment path for compose configurations.
+Its contents are:
 `.env`:::
-Environment configuration for the ANMS containers.
+The compose-level environment configuration for all of the ANMS and testenv containers, including host port mapping options (see <<sec-deploy-containers>>).
 `docker-compose.yml`:::
-The actual Docker Compose configuration for the ANMS, which is configured for auto-startup of required containers.
+Compose configuration for the ANMS containers, volumes, and networks.
+The compose runtime is managed by the `podman-compose@anms` template service.
+`testenv-compose.yml`:::
+Compose configuration for the test environment containers and network.
+The compose runtime is managed by the `podman-compose@testenv` template service.
+
+`/run/anms`::
+The temporary file directory used at runtime.
+Its contents are:
+`proxy.sock`:::
+The transport proxy socket needed by the AMP Manager in order to message to and from agents.
 
 Secondary files related to the ANMS deployment are:
 
-`/etc/docker/daemon.json`::
-Configured to enable SELinux for containers.
+`/etc/containers/containers.conf`::
+Configured to enable compose provider and SELinux for containers.
+`/etc/containers/compose/projects/anms.env`::
+The systemd environment for the `anms` project, used by the systemd service `podman-compose@anms`.
+This points to `/ammos/anms/` for its compose configuration.
+`/etc/systemd/system/podman-compose@.service`::
+A parameterized service interface which reads compose environment from under `/etc/containers/compose/projects/`
+
+`/ammos/etc/pki/tls`::
+Host-level PKI security configuration from which the ANMS user-agent TLS configuration is derived.
+Its contents for ANMS are:
+`private/ammos-server-key.pem`:::
+The private key for the local TLS endpoint.
+`certs/ammos-server-cert.pem`:::
+The corresponding public key certificiate for the local TLS endpoint.
+`certs/ammos-ca-bundle.crt`:::
+The trusted CA bundle for all TLS endpoints (including users).
+
 `/var/cache/puppet/puppet-selinux/modules`::
 The containing directory for SELinux modules for the ANMS containers (see <<sec-security>>).
 
@@ -303,23 +365,18 @@ The containing directory for SELinux modules for the ANMS containers (see <<sec-
 [#sec-network]
 === Networking
 
-The target host will be running RHEL-8 with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
+The target host will be running RHEL-9 with network interfaces configured, and IP addressing and DNS configured along with a running local firewall.
 
-The Docker network configuration for the ANMS includes host port forwarding for the following services:
+The container network configuration (under `/ammos/anms`) for the ANMS includes host port forwarding for the following services:
 
 HTTPS::
 Default port 443 forwarded to the `authnz` container for HTTP use.
-UDPCL::
-Default port 4556 forwarded to the `ion-manager` container for BP use.
-LTPCL::
-Default port 1113 forwarded to the `ion-manager` container for BP use.
 
-The current ANMS will allow only the BP UDP Convergence Layer \(((UDPCL))) to be configured on agents, but this is a UI restriction and not an intrinsic limitation of the BP Agent used by the ANMS.
-Future versions of the ANMS will allow more complex convergence layer configurations.
+As depicted in <<fig-anms-components-protocol>>, the ANMS deployment itself does not include a BP Agent and does not either contain or require any specific configuration of a BP Agent or its associated convergence layers.
 
 [NOTE]
-The ANMS deployment manifest includes an optional set of local AMP Agents to use to test with.
-These use the local Docker network to communicate with the ANMS, while real remote agents will require the external network configuration to include port forwarding and host name resolution for the ANMS BP Agent.
+The ANMS "testenv" compose configuration includes an optional AMP Manager and a set of local AMP Agents to use to test with.
+These use a separate "testenv" Docker network to communicate between each other, while real remote agents will require external network configuration to include port forwarding and host name resolution for the Manager-associated BP Agent.
 How those are configured is outside the scope of this document.
 
 
@@ -330,11 +387,9 @@ The host on which the ANMS instance runs is expected to have ((FIPS-140)) mode e
 Part of the ANMS deployment includes an SELinux module for each of the component containers which allow all necessary inter-service communication.
 If issues with SELinux are suspected in a deployment, follow the procedures in <<sec-proc-mon-selinux>> to find any audit events related to the ANMS.
 
-The host is also expected to have a running OS-default firewall which will be configured by the Puppet module to allow HTTPS for user agents and BP UDPCL and LTPCL default ports.
+The host is also expected to have a running OS-default firewall which will be configured by the Puppet module to allow HTTPS for user agent access.
 
 The interface between ANMS and its User Agents is TLS-secured HTTP with a PKIX certificate supplied by the host network management and chained to the CA hierarchy of the network. 
-
-The interface between ANMS and its managed AMP Agents is not currently secured, pending updates to the BP Agent to enable BPSec for integrity and/or confidentiality of AMP messages.
 
 
 [#sec-database]
@@ -352,23 +407,69 @@ Reported ((Data Warehouse))::
 When reports arrive from managed agents and are associated with known ADMs they are disassembled and stored as object-values in the historical data warehouse.
 
 
+[#sec-devel]
+== Development Procedures
+
+This chapter includes procedures related to development and pre-production testing of the ANMS.
+These procedures assume that the user has a working copy of the ANMS source tree an intends to make some changes to the source or the configuration outside of a normal production deployment procedure (where build happens on a different host from the ultimate installation).
+
+[#sec-devel-deploy]
+=== Test Build and Deployment
+
+TBD
+
+[#sec-devel-install]
+=== Production-Like Build and Installation
+
+This procedure builds images in the root user's podman context and then uses puppet to install to the local host.
+
+More TBD
+
+. Images for all of the ANMS production and test containers can be built with the following:
+```
+sudo AUTHNZ_EMU=authnz-emu podman compose -p anms -f docker-compose.yml --podman-build-args='--format docker' build
+sudo podman compose -p agents -f agent-compose.yml --podman-build-args='--format docker' build
+```
+. The deployment configuration is set by editing the file `puppet/data/override.yaml` to contain similar to:
++
+----
+anms::docker_image_prefix: "" # Left empty to use locally built images
+anms::docker_image_tag: "latest"
+----
+. Pull the necessary upstream Puppet modules with:
++
+----
+./puppet/prep.sh
+----
+. Perform a dry-run of the puppet apply with:
++
+----
+sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test --noop
+----
+and verify that there are no unexpected changes.
+. Perform the actual puppet apply with:
++
+----
+sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test
+----
+
+
 [#sec-proc]
-== Procedures
+== Production Procedures
 
-This chapter includes specific procedures related to managing an ANMS instance.
-
+This chapter includes specific procedures related to managing an ANMS production instance.
 
 [#sec-proc-build]
 === Building
 
-The ANMS source is composed of a top-level repository `ammos-anms` and a number of submodule repositories; all of them are required for building the ANMS.
+The ANMS source is composed of a top-level repository `anms` and a number of submodule repositories; all of them are required for building the ANMS.
 
 Before beginning, ensure that either Docker or Podman (preferred) is installed and functional on your system along with docker-compose.  A hello-world image can be run to verify functionality, ie: `docker run --rm hello-world` or `podman run --rm hello-world`.  Compose can be verified with `podman compose ps` - If compose is not properly installed it will report 'unrecognized command'
 
 . The top-level checkout can be done with:
 +
 ----
-git clone --recursive --branch <TAGNAME> <BASEURL>/ammos-anms.git
+git clone --recursive --branch <TAGNAME> https://github.com/NASA-AMMOS/anms.git
 ----
 . Optional: switching to a different tag or branch can be done with the sequence:
 +
@@ -382,27 +483,21 @@ git submodule update --init --recursive
 sudo usermod -a -G docker ${USER}
 ----
 . Update `.env` file as needed.  Fields that may need to be updated include `DOCKER_IMAGE_PREFIX` and for rootless podman the port mappings for AUTHNZ may need to be uncommented to avoid permissions issues
-. Build core images using either
+. Build images using either: (Note: The podman-build-args flag is required for healthchecks to function under podman).
 +
 ----
-docker compose build
-podman compose --podman-build-args='--format docker' build
+docker compose -f docker-compose.yml -f testenv-compose.yml build
+podman compose --podman-build-args='--format docker' -f docker-compose.yml -f testenv-compose.yml build
 ----
-
-. Build agent images using either
-+
-----
-docker compose -f agent-compose.yml build
-podman compose --podman-build-args='--format docker' -f agent-compose.yml build
-----
-
 
 +
 
 [NOTE]
 ====
-To build an ANMS that uses an emulator for the CAM Gateway (which means that the ANMS will not require a CAM server), update the `.env` file to set `AUTHNZ_EMU=demo`.  To use the CAM Gateway, this variable must be set to `cam-gateway`.  
-
+To build an ANMS that uses an emulator for the CAM Gateway (which means that the ANMS will not require a CAM server), have the following environment set in the build step above. (Note: The default value that uses the CAM Gateway is `cam-gateay`):
+----
+export AUTHNZ_EMU=demo
+----
 ====
 
 [#sec-proc-install]
@@ -512,32 +607,32 @@ Although the docker volume `anms_postgres` contains the raw database state, this
 
 To perform an online backup (keeping the database running) run the following on the host:
 ```
-podman exec postgres pg_dump -Ft -d amp_core | gzip -c >~/anms-backup.tar.gz
+podman compose -p anms exec -T postgres pg_dump -Ft -d amp_core | gzip -c >~/anms-backup.tar.gz
 ```
 which can the later be restored using:
 ```
-gunzip -c <~/anms-backup.tar.gz | podman exec -i postgres pg_restore --clean -d amp_core
+gunzip -c <~/anms-backup.tar.gz | podman compose -p anms exec -T postgres pg_restore --clean -d amp_core
 ```
 
 
 [#sec-proc-mon-docker]
 ==== Container State and Logs
 
-Because of the Compose configuration described in <<sec-host-files>>, accessing docker state and logs requires running docker with a command similar to the following:
+Because of the Compose configuration described in <<sec-host-files>>, accessing container state and logs requires running podman with a command similar to the following:
 ```
-podman compose -f /ammos/anms/docker-compose.yml -p anms [action] ...
+podman compose -p anms [action] ...
 ```
 
 The state of all containers in the ANMS project can be observed with:
 ```
-podman compose -f /ammos/anms/docker-compose.yml -p anms ps
+podman compose -p anms ps
 ```
 which will report a "State" column either as "Up" for simple servcies or "Up (healthy)" for health-checked services.
 
 
-And observing logs from specific docker containers requires running a command similar to:
+And observing logs from specific containers requires running a command similar to:
 ```
-podman compose -f /ammos/anms/docker-compose.yml -p anms logs [service-name]
+podman compose -p anms logs [service-name]
 ```
 
 
@@ -570,7 +665,7 @@ In many fault cases, the procedure will work for the first steps and then fail o
 This is taken advantage of for the purposes of troubleshooting and failure reporting; the specific procedure(s) run and step(s) that fail are valuable to include in issue reports related to the ANMS.
 
 To make the procedures more readable, the ANMS host is assumed to have the resolveable host name `anms-serv`.
-For checkout steps ocurring on a "client host" it is assumed to be running RHEL-8 or equivalent from the perspective of commands available.
+For checkout steps ocurring on a "client host" it is assumed to be running RHEL-9 or equivalent from the perspective of commands available.
 
 
 [#sec-checkout-frontend]
@@ -585,7 +680,7 @@ The checkout procedure is as follows:
 ----
 sudo firewall-cmd --zone public --list-services
 ----
-which should include the servies "https".
+which should include the services "https".
 . From a client host check the port is open with:
 +
 ----
@@ -626,11 +721,29 @@ Server: Apache/2.4.37 (Red Hat Enterprise Linux) OpenSSL/1.1.1k
 Location: /authn/login.html
 ----
 
+[#sec-checkout-refdm]
+==== AMP Manager Proxy Connection
+
+This procedure checks whether the AMP Manager within the ANMS can connect to its transport proxy.
+
+The checkout procedure is as follows:
+
+. From the ANMS host verify the proxy socket exists with:
++
+----
+ls -l /run/anms/
+----
+which should include the file "proxy.sock".
+
+. From the ANMS host check the REFDM daemon logs with:
+----
+docker compose -p anms exec -T amp-manager journalctl --unit refdm-proxy | grep -B4 Connected
+----
 
 [#sec-checkout-bpa]
 ==== BP Agent Communication
 
-This procedure checks whether the BPA in the ANMS can communicate with the BPA of a specific managed device.
+This procedure checks whether the BPA in the "testenv" network can communicate with the BPA of a specific managed device.
 
 The checkout procedure is as follows:
 
@@ -639,8 +752,8 @@ The checkout procedure is as follows:
 ----
 sudo firewall-cmd --zone public --list-services
 ----
-which should include the servies "ltp" and "dtn-bundle-udp".
-. From any RHEL-8 host on the agent network run the following:
+which should include the services "ltp" and "dtn-bundle-udp".
+. From any RHEL-9 host on the agent network run the following:
 +
 ----
 sudo nmap anms-serv -sU -p4556
@@ -667,7 +780,7 @@ PORT     STATE    SERVICE
 . From the ANMS host run the following:
 +
 ----
-docker exec ion-manager ion_ping_peers 1 2 3
+podman compose -p testenv exec ion-manager ion_ping_peers 1 2 3
 ----
 
 == Product Support
@@ -734,7 +847,7 @@ To resolve the issue, restart the ION containers using `podman compose restart n
 If registering a new Agent does not result in an update to the displayed Agents in the ANMS Agent tab,  check that it has been registered to the Manager via the nm-manager CLI.
 The nm-manager CLI is accessible from a terminal, and this check can be done using a command such as:
 ```
-docker exec -it ion-manager journalctl -f --unit ion-nm-mgr
+podman compose -p anms exec amp-manager journalctl -f --unit refdm-proxy
 ```
 
 If the results confirm that the Agent is registered but it still does not show on the Agents tab of the ANMS, there may be an 
@@ -765,7 +878,11 @@ This is most likely related to the `host` or `bind address` specified in `anms-u
 ===== ANMS-UI is not visible at hostname
 
 If http://hostname:9030 (replace hostname with the server's hostname) displays the ANMS UI, but 
-http://hostname does not render the same page, this indicates an issue with authnz gateway proxying.
+http://hostname does not render the same page, this indicates an issue with the frontend HTTP router. 
+
+Check the status of the `authnz` container in the compose services list.
+It may be necessary to restart the container using:
+`sudo podman compose -p anms restart authnz`. 
 
 Port numbers can be overridden through environment variables (see .env file). Check that ports are mapped to the expected ports and are not being blocked by your system's firewall (if applicable).
 

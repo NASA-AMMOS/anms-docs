@@ -1,18 +1,19 @@
 digraph AMMOS {
   node [shape=box,style=filled];
+  newrank=true;
 
   subgraph cluster_ANMS {
     label="ANMS Instance";
-    labeljust=r;
+    labeljust=l;
 
     authnz [label="CAM Gateway" group=main];
-    authnz -> authnz [label="HTTP"];
     
     anms_core [label="anms-core" group=main];
     transcoder [label="Transcoder"];
     aricodec [label="ARI CODEC"];
     amp_manager [label="AMP Manager"];
-    
+    dw [label="Data warehouse"];
+
     authnz -> anms_core [label="REST"];
     anms_core -> dw [label="SQL"];
     anms_core -> amp_manager [label="AMP"];
@@ -24,7 +25,7 @@ digraph AMMOS {
     diagnostic [label="Diagnostic Tools"];
     authnz -> diagnostic [label="HTTP"];
 
-    dw [label="Data warehouse"];
+    authnz -> amp_manager [label="HTTP"];
     amp_manager -> dw [label="SQL"];
     grafana -> dw [label="SQL"];
   }
@@ -43,9 +44,10 @@ digraph AMMOS {
   subgraph cluster_agents {
     label="Managed Device [0..*]";
     labeljust=r;
-    style=filled;
 
     amp_agent [label="AMP Agent"];
     amp_manager -> amp_agent [label="AMP"];
   }
+
+  { rank = same; authnz; cam_server; }
 }
