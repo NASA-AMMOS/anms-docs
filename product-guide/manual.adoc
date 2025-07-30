@@ -72,7 +72,7 @@ The source or destination of a BP bundle.
 Container::
 An isolated unit of runtime state within a host.
 Convergence Layer Adapter (CLA)::
-The mechanims used to transport bundles within an underlay (IP) network.
+A specific mechanism used to transport bundles within an underlay (IP) network.
 Endpoint ID (EID)::
 The identifier of a BP Endpoint; names the source and destination for a BP bundle.
 Host::
@@ -157,7 +157,7 @@ Although some of the subsystems have a preferred start-up order (to ensure initi
 
 The subsystems of the ANMS (all containers) are illustrated as gray blocks within the "ANMS Instance" group in the diagram of <<fig-anms-components-protocol>>.
 The entire ANMS instance is made to be run on a single host, with future plans to allow installing in a more distributed environment.
-Currently the ANMS provides security at the boundary of the instance but not between comtainers (see <<sec-security>> for details), which would be required for a distributed installation.
+Currently the ANMS provides security at the boundary of the instance but not between containers (see <<sec-security>> for details), which would be required for a distributed installation.
 
 A higher-level logical view of the ANMS is shown in <<fig-anms-components-logical>> where some of the internal infrastructure containers (e.g., PostgreSQL database, MQTT broker) are removed for clarity.
 
@@ -348,7 +348,7 @@ Its contents for ANMS are:
 `private/ammos-server-key.pem`:::
 The private key for the local TLS endpoint.
 `certs/ammos-server-cert.pem`:::
-The corresponding public key certificiate for the local TLS endpoint.
+The corresponding public key certificate for the local TLS endpoint.
 `certs/ammos-ca-bundle.crt`:::
 The trusted CA bundle for all TLS endpoints (including users).
 
@@ -493,7 +493,7 @@ export AUTHNZ_EMU=demo
 The ANMS uses Puppet version 7 <<puppet-agent>> to install requisite system packages and configure system files and services.
 In addition, Bolt <<puppet-bolt>> is needed to install needed Puppet modules and run the Puppet agent remotely.
 
-CAUTION: The example TLS configuration in this proceure is for demonstration only and must not be present in a production installation.
+CAUTION: The example TLS configuration in this procedure is for demonstration only and must not be present in a production installation.
 Details for creating a proper TLS volume are in <<sec-proc-install-tls>>.
 
 To install the ANMS on the local host perform the following:
@@ -601,7 +601,7 @@ The state of all containers in the ANMS project can be observed with:
 ```
 podman compose -p anms ps
 ```
-which will report a "State" column either as "Up" for simple servcies or "Up (healthy)" for health-checked services.
+which will report a "State" column either as "Up" for simple services or "Up (healthy)" for health-checked services.
 
 
 And observing logs from specific containers requires running a command similar to:
@@ -639,7 +639,7 @@ In many fault cases, the procedure will work for the first steps and then fail o
 This is taken advantage of for the purposes of troubleshooting and failure reporting; the specific procedure(s) run and step(s) that fail are valuable to include in issue reports related to the ANMS.
 
 To make the procedures more readable, the ANMS host is assumed to have the resolveable host name `anms-serv`.
-For checkout steps ocurring on a "client host" it is assumed to be running RHEL-9 or equivalent from the perspective of commands available.
+For checkout steps occurring on a "client host" it is assumed to be running RHEL-9 or equivalent from the perspective of commands available.
 
 
 [#sec-checkout-frontend]
@@ -806,8 +806,7 @@ $ sudo chmod 777 docker_data/grafana_vol
 $ sudo chmod 777 docker_data/grafana_vol/grafana.db
 ```
 
-After changing these permissions, run `docker-compose up grafana` again, and the Grafana
-container should start sucessfully.
+After changing these permissions, run `docker-compose up grafana` again, and the Grafana container should start successfully.
 
 ===== Agent Registration Issues on ANMS Startup
 
