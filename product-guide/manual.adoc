@@ -118,7 +118,7 @@ The network protocol used for inter-container communication and for BP convergen
 |DOC-005446
 
 |ANMS User Guide[[anms-user-guide,ANMS User Guide]]
-|DOC-005443 rev A
+|DOC-005443 rev B
 
 |===
 
@@ -134,8 +134,8 @@ The network protocol used for inter-container communication and for BP convergen
 |Installing Bolt[[puppet-bolt]]
 |https://www.puppet.com/docs/bolt/latest/bolt_installing.html#install-bolt-on-rhel[puppet-bolt]
 
-|Using SELinux[[rhel8-selinux]]
-|https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/8/pdf/using_selinux/red_hat_enterprise_linux-8-using_selinux-en-us.pdf[rhel8-selinux]
+|Using SELinux[[rhel9-selinux]]
+|https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/9/pdf/using_selinux/red_hat_enterprise_linux-9-using_selinux-en-us.pdf[rhel9-selinux]
 
 |ANMS Source[[anms-source]]
 |https://github.com/NASA-AMMOS/anms[anms-source]
@@ -197,9 +197,9 @@ Specific procedures for performing an installation using a local Puppet apply ar
 Conditions for installing the ANMS are a host with packages identified in <<target-host-packages>>, at least 7{nbsp}GiB of filesystem space for container image storage, and additional space for long-term data warehouse storage.
 The total amount of storage needed depends on the mission use of reports, specifically the average size and rate of reported data.
 
-Note: Usage of podman is recommended. Docker should continue to function as a drop-in replacement, however only podman deployments will be directly supported by the ANMS team.
+NOTE: Usage of podman is recommended. Docker should continue to function as a drop-in replacement, however only podman deployments will be directly supported by the ANMS team.
 
-Note: It is recommended to use docker-compose (which is fully compatible with podman). docker-compose is a distinct package from Docker, while podman-compose is a fully compatible alternative.  Older versions of compose were called directly (ie: `docker-compose`), while current versions are invoked as a subcommand (ie: `docker compose` or `podman compose`). 
+NOTE: It is recommended to use docker-compose (which is fully compatible with podman). docker-compose is a distinct package from Docker, while podman-compose is a fully compatible alternative.  Older versions of compose were called directly (ie: `docker-compose`), while current versions are invoked as a subcommand (ie: `docker compose` or `podman compose`). 
 
 [#target-host-packages]
 .Target host packages
@@ -325,7 +325,7 @@ The project-specific deployment path for compose configurations.
 Its contents are:
 `.env`:::
 The compose-level environment configuration for all of the ANMS and testenv containers, including host port mapping options (see <<sec-deploy-containers>>).
-`docker-compose.yml`:::
+`anms-compose.yml`:::
 Compose configuration for the ANMS containers, volumes, and networks.
 The compose runtime is managed by the `podman-compose@anms` template service.
 `testenv-compose.yml`:::
@@ -574,7 +574,7 @@ This should only be used for test hosts or after performing a full Postgres DB b
 To force containers and volumes (containing long-term database files) to be cleared, a maintainer can run the following from the host.
 
 ```
-podman compose down
+podman stop --all
 podman system prune --all --volumes
 ```
 
@@ -587,7 +587,7 @@ podman volume ls
 podman network ls
 ```
 
-WARNING: In some cases, issues may arise due to system cache files on the host system not being cleared (a potential issue with select podman versions). It is recommended to restart the host system after clearing objects to ensure a clean start.
+TIP: In some cases, issues may arise due to system cache files on the host system not being cleared (a potential issue with select podman versions). It is recommended to restart the host system after clearing objects to ensure a clean start.
 
 After clearing containers and volumes, the normal `apply_local` step of <<sec-proc-install>> should be performed to re-install and start the containers.
 
@@ -639,7 +639,7 @@ podman compose -p anms logs [service-name]
 [#sec-proc-mon-selinux]
 ==== SELinux Audit Events
 
-The procedures in this section are a summary of more detail provided in Chapter 5 of the RedHat <<rhel8-selinux>> document.
+The procedures in this section are a summary of more detail provided in Chapter 5 of the RedHat <<rhel9-selinux>> document.
 
 By default, the `setroubleshootd` service is running, which intercepts SELinux audit events
 
