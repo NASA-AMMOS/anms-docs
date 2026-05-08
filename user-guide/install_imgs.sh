@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ##
-## Copyright (c) 2023-2025 The Johns Hopkins University Applied Physics
+## Copyright (c) 2023-2026 The Johns Hopkins University Applied Physics
 ## Laboratory LLC.
 ##
 ## This file is part of the Asynchronous Network Management System (ANMS).
@@ -24,14 +24,14 @@ SRCDIR=$1
 OUTDIR=$2
 DBOOKFILE=$3
 
-if [ -z "${DBOOKFILE}" ]
+if [[ -z "${DBOOKFILE}" ]]
 then
     FILENAMES=""
     for HTMLFILE in ${OUTDIR}/*.html
     do
-	echo "Scanning ${HTMLFILE}"
-	THESENAMES=$(xmlstarlet sel -N xhtml=http://www.w3.org/1999/xhtml -t -v '//xhtml:img/@src' -n "${HTMLFILE}")
-	FILENAMES="${FILENAMES} ${THESENAMES}"
+        echo "Scanning ${HTMLFILE}"
+        THESENAMES=$(xmlstarlet sel -N xhtml=http://www.w3.org/1999/xhtml -t -v '//xhtml:img/@src' -n "${HTMLFILE}")
+        FILENAMES="${FILENAMES} ${THESENAMES}"
     done
 else
     FILENAMES=$(xmlstarlet sel -N db=http://docbook.org/ns/docbook -t -v '//db:imagedata/@fileref' -n "${DBOOKFILE}")
@@ -40,7 +40,7 @@ fi
 for FN in ${FILENAMES}
 do
     SRCFN="${SRCDIR}/${FN}"
-    if [ ! -f "${SRCFN}" ]
+    if [[ ! -f "${SRCFN}" ]]
     then
         continue
     fi
