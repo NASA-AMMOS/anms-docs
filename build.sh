@@ -56,7 +56,7 @@ then
 else
     # actual build
     cmake -S . -B build
-    cmake --build build $@
+    cmake --build build "$@"
     if [[ -n "${DESTDIR}" ]]
     then
         cmake --install build
