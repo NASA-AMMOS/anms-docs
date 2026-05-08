@@ -29,7 +29,7 @@ SELFDIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 cd ${SELFDIR}
 cmake -S . -B build
 cmake --build build $@
-if [ -n "${DESTDIR}" ]
+if [[ -n "${DESTDIR}" ]]
 then
     cmake --install build
 fi
