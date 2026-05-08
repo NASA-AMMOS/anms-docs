@@ -1,5 +1,5 @@
 ##
-## Copyright (c) 2023-2025 The Johns Hopkins University Applied Physics
+## Copyright (c) 2023-2026 The Johns Hopkins University Applied Physics
 ## Laboratory LLC.
 ##
 ## This file is part of the Asynchronous Network Management System (ANMS).
@@ -37,23 +37,36 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           submodules: recursive
       - name: Set up OS
         run: |
-          sudo rm /var/lib/man-db/auto-update
-          sudo apt-get update && sudo apt-get install -y cmake make coreutils ruby asciidoctor graphviz inkscape dblatex docbook-xsl-ns xsltproc xmlstarlet
-          sudo gem install asciidoctor-diagram
+          sudo apt-get update
+          sudo apt-get install -y \
+              cmake make coreutils \
+              ruby asciidoctor graphviz plantuml inkscape \
+              dblatex xmlstarlet aspell
+          sudo gem install \
+              asciidoctor-diagram \
+              'asciidoctor-diagram-plantuml:~>1.2024.8'
       - name: Build
         env:
           DESTDIR: public
         run: ./build.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: docs
           path: public
+      - uses: actions/upload-artifact@v7
+        with:
+          archive: false
+          path: public/product-guide/anms-product-guide.pdf
+      - uses: actions/upload-artifact@v7
+        with:
+          archive: false
+          path: public/user-guide/anms-user-guide.pdf
 
   deploy:
     # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
@@ -73,16 +86,16 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: docs
           path: public
       - name: Setup Pages
-        uses: actions/configure-pages@v3
+        uses: actions/configure-pages@v6
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: public
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

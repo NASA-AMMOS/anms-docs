@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## Copyright (c) 2023-2025 The Johns Hopkins University Applied Physics
+## Copyright (c) 2023-2026 The Johns Hopkins University Applied Physics
 ## Laboratory LLC.
 ##
 ## This file is part of the Asynchronous Network Management System (ANMS).
@@ -33,7 +33,7 @@ set -e
 SELFDIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
 
 LICENSEOPTS="${LICENSEOPTS} --tmpl ${SELFDIR}/apply_license.tmpl"
-LICENSEOPTS="${LICENSEOPTS} --years 2023-$(date +%Y)"
+LICENSEOPTS="${LICENSEOPTS} --years 2023-2026"
 # Excludes only apply to directory (--dir) mode and not file mode
 #LICENSEOPTS="${LICENSEOPTS} --exclude *.yml "
 
