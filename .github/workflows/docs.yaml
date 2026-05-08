@@ -56,25 +56,7 @@ jobs:
           DESTDIR: public
         run: ./build.sh
       - name: Misspelling
-        env:
-          USER_MISSPELLING_TXT: 'build/default/user-guide/misspelling.txt'
-          USER_MISSPELLING_CTX_TXT: 'build/default/user-guide/misspelling-ctx.txt'
-          PROD_MISSPELLING_TXT: 'build/default/product-guide/misspelling.txt'
-          PROD_MISSPELLING_CTX_TXT: 'build/default/product-guide/misspelling-ctx.txt'
-        # success means file is present and empty
-        run: |
-          if [[ (-f "${USER_MISSPELLING_TXT}" && ! -s "${USER_MISSPELLING_TXT}") || (-f "${PROD_MISSPELLING_TXT}" && ! -s "${PROD_MISSPELLING_TXT}") ]]
-          then
-            printf "\nUser guide:\n"
-            cat "${USER_MISSPELLING_TXT}"
-            printf "\nIn context:\n"
-            cat "${USER_MISSPELLING_CTX_TXT}"
-            printf "\nProduct guide:\n"
-            cat "${PROD_MISSPELLING_TXT}"
-            printf "\nIn context:\n"
-            cat "${PROD_MISSPELLING_CTX_TXT}"
-            exit 1
-          fi
+        env: ./build.sh docs-spelling
       - uses: actions/upload-artifact@v7
         with:
           name: docs
