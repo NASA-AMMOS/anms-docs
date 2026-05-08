@@ -43,7 +43,6 @@ then
         cat "${USER_MISSPELLING_CTX_TXT}"
         ((FAILURES += 1))
     fi
-    test ! -s "${PROD_MISSPELLING_TXT}"; echo $?
     if [[ -s "${PROD_MISSPELLING_TXT}" ]]
     then
         printf "\nProduct guide:\n"
