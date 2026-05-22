@@ -1,4 +1,4 @@
-#[[
+/*
 Copyright (c) 2023-2026 The Johns Hopkins University Applied Physics
 Laboratory LLC.
 
@@ -18,30 +18,61 @@ This work was performed for the Jet Propulsion Laboratory, California
 Institute of Technology, sponsored by the United States Government under
 the prime contract 80NM0018D0004 between the Caltech and NASA under
 subcontract 1658085.
-]]
-cmake_minimum_required(VERSION 3.16)
-# No compiler checks
-project(anms-docs LANGUAGES )
-set(CMAKE_INSTALL_PREFIX "")
+*/
+:root {
+  background-color: #f8f8f8;
+}
 
-include(FetchContent)
-FetchContent_Declare(
-  xsltng
-  URL https://codeberg.org/DocBook/xslTNG/releases/download/2.8.0/docbook-xslTNG-2.8.0.zip
-  URL_HASH SHA256=adbbddbf33a4fcc5c949a2851cac53e8111d30a5fd0b32429eeec68aedb61efd
-  DOWNLOAD_EXTRACT_TIMESTAMP OFF
-)
-FetchContent_MakeAvailable(xsltng)
-file(GLOB xsltng_JAR "${xsltng_SOURCE_DIR}/libs/*.jar")
-if(NOT xsltng_JAR)
-  message(FATAL_ERROR "No xslTNG jar file found under ${xsltng_SOURCE_DIR}")
-endif(NOT xsltng_JAR)
+main {
+  padding-top: 0em;
+  padding-left: 1em;
+  padding-right: 1em;
+  background-color: #ffffff;
+  --background-color: #ffffff;
+  --header-color: #ffffff;
+}
 
-add_subdirectory(user-guide)
-add_subdirectory(product-guide)
+div.legalnotice {
+  margin: 0.5em;
+  padding: 0.5em;
+}
+div.legalnotice header {
+  margin-top: 1em;
+}
 
-install(
-  FILES deploy-index.html
-  RENAME index.html
-  DESTINATION .
-)
+div.revhistory div.title, div.revhistory ul {
+  border-bottom-style: solid;
+  border-bottom-width: 1px;
+  border-bottom-color: #808080;
+}
+div.revhistory p {
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+ul.toc {
+  padding-left: 1em;
+}
+ul.toc li {
+  padding-left: 1em;
+}
+
+div.varlistentry dt {
+  font-weight: bold;
+}
+div.varlistentry dd p {
+  margin-top: 0;
+}
+
+td p {
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+div.figure {
+  border-color: #c8c8c8;
+}
+
+div.qanda div.question {
+  font-weight: bold;
+}

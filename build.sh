@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ##
-## Copyright (c) 2023-2025 The Johns Hopkins University Applied Physics
+## Copyright (c) 2023-2026 The Johns Hopkins University Applied Physics
 ## Laboratory LLC.
 ##
 ## This file is part of the Asynchronous Network Management System (ANMS).
@@ -25,11 +25,39 @@
 set -e
 
 SELFDIR=$(realpath $(dirname "${BASH_SOURCE[0]}"))
-
 cd ${SELFDIR}
-cmake -S . -B build
-cmake --build build $@
-if [[ -n "${DESTDIR}" ]]
+
+if [[ "$1" == "docs-spelling" ]]
 then
-    cmake --install build
+    USER_MISSPELLING_TXT="build/user-guide/misspelling.txt"
+    USER_MISSPELLING_CTX_TXT="build/user-guide/misspelling-ctx.txt"
+    PROD_MISSPELLING_TXT="build/product-guide/misspelling.txt"
+    PROD_MISSPELLING_CTX_TXT="build/product-guide/misspelling-ctx.txt"
+    # success means file is present and empty
+    FAILURES=0
+    if [[ -s "${USER_MISSPELLING_TXT}" ]]
+    then
+        printf "\nUser guide:\n"
+        cat "${USER_MISSPELLING_TXT}"
+        printf "\nIn context:\n"
+        cat "${USER_MISSPELLING_CTX_TXT}"
+        ((FAILURES += 1))
+    fi
+    if [[ -s "${PROD_MISSPELLING_TXT}" ]]
+    then
+        printf "\nProduct guide:\n"
+        cat "${PROD_MISSPELLING_TXT}"
+        printf "\nIn context:\n"
+        cat "${PROD_MISSPELLING_CTX_TXT}"
+        ((FAILURES += 1))
+    fi
+    exit ${FAILURES}
+else
+    # actual build
+    cmake -S . -B build
+    cmake --build build "$@"
+    if [[ -n "${DESTDIR}" ]]
+    then
+        cmake --install build
+    fi
 fi
