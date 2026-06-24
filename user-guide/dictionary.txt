@@ -47,12 +47,15 @@ num
 ODM
 param
 parseable
+plaintext
+PostgresSQL
 pre
 proxying
 ReferenceARI
 rpt
 rptset
 rptt
+runtime
 rx
 STR
 submodule
