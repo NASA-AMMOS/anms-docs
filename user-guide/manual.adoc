@@ -48,7 +48,7 @@ This User Guide provides an overview of the user interface (UI) and high-level w
 |Asynchronous Network Management System (ANMS)
 
 |Version
-|1.1
+|3.0
 |===
 
 === Scope
@@ -755,7 +755,3 @@ There is a https://github.com/NASA-AMMOS/anms/blob/main/CONTRIBUTING.md[`CONTRIB
 Separate from the source for the ANMS proper, the ANMS Product Guide and User Guide are hosted on a GitHub repository <<anms-docs>>, with its own https://github.com/NASA-AMMOS/anms-docs/blob/main/CONTRIBUTING.md[`CONTRIBUTING.md`] document for submitting tickets about either the Product Guide or User Guide.
 
 While the GitHub repositories are the primary means by which users should submit detailed tickets, other inquiries can be made directly via email to the the support address mailto:dtnma-support@jhuapl.edu[,ANMS Support].
-
-
-[index]
-== Index

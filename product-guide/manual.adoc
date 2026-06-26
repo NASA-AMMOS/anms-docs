@@ -49,7 +49,7 @@ This Product Guide provides architectural and maintenance details about the Asyn
 |Asynchronous Network Management System (ANMS)
 
 |Version
-|1.1
+|3.0
 |===
 
 === Scope
