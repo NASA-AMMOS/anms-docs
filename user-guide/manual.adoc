@@ -48,7 +48,7 @@ This User Guide provides an overview of the user interface (UI) and high-level w
 |Asynchronous Network Management System (ANMS)
 
 |Version
-|1.1
+|3.0
 |===
 
 === Scope
@@ -145,7 +145,7 @@ Selecting an item from a drop-down list of available options.
 
 == User Interface
 
-The following section provides an overview of the ANMS User Interface, organized by the capabilities provided by each of the tabs - Monitor, Agents, Build, Status, ADMs - shown at the top of the ANMS display. 
+The following section provides an overview of the ANMS User Interface, organized by the capabilities provided by each of the tabs - Monitor, Agents, Build, Status, ADMs - shown at left side pop-out menu of the ANMS display.
 
 
 === User Accounts and Login/Logout
@@ -153,34 +153,14 @@ The following section provides an overview of the ANMS User Interface, organized
 The first thing that must happen before a user can access the ANMS is to log-in with an authorized user account.
 The Common Access Manager (CAM) controls authentication, authorization, and auditing (AAA) functions for the ANMS (and other AMMOS tools) so any account creation or maintenance must be done in either CAM or its Active Directory user database.
 
-After a user has successfully logged-in the current account name is displayed in the top ribbon of each ANMS page as in <<fig-top-ribbon>>.
 The leftmost side of the ribbon contains the ANMS name and version identifier.
-The rightmost side contains the account name and link, along with a "Logout" link.
+The rightmost side contains the profile info link, along with a "Logout" link.
 
 [#fig-top-ribbon]
 .Top Ribbon Example
 image::images/top-ribbon.png[]
 
-Selecting the user account link will show the user's profile page, as described in <<sec-user-profile>>.
 Selecting the Logout link will immediately cause the login session to be ended and the browser will redirect back to the login page.
-
-[#sec-user-profile]
-==== User Profile Page
-
-This page includes parameters associated only with a user account, rather than any particular managed Agent or ADM. These parameters include:
-* Username
-* Email
-* First Name
-* Last Name
-* Membership Length
-
-[#fig-user-profile]
-.User Profile Example
-image::images/user-profile.png[]
-
-The Email, First Name, and Last Name fields can be edited on this page. Clicking the green `Update` button will update the user profile with these changes.
-
-
 [#sec-monitoring]
 === Monitoring 
 
@@ -386,17 +366,17 @@ image::images/agent-manage-toast.png[]
 .Select the Build Tab of the ANMS
 image::images/build-tab.png[]
 
-The *Build* tab is for used for generating ARIs, translating string ARIs to CBOR, and sending those ARIs to the ANMS database and/or Agent(s). All ARIs in the ANMS database can be used to generate new string ARIs using the `ARI Builder` that can be translated using the `ARI String Input` option. To switch between building and translating ARIs, use the toggle at the center of the screen beneath the menu bar.
+The *Build* tab is for used for generating ARIs, translating string ARIs to CBOR, and sending those ARIs to the ANMS database and/or Agent(s). All ARIs in the ANMS database can be used to generate new string ARIs using the `ARI Builder` that can be translated using the `ARI String Input` option. To switch between building ARIs via dropdown menus, defining ARIs with plaintext, and translating ARIs from hex (CBOR), use the toggle at the center of the screen beneath "ARI Builder".
 
 When first navigating to this tab, the ANMS compiles all known ARIs, including their parameter information, from the database. 
 
 ==== ARI String Input
 
 [#fig-string-input]
-.ARI String Input Toggle
+.ARI Text Input Toggle
 image::images/string-input.png[]
 
-The ANMS transcodes string ARIs to CBOR, which can then be sent to Agents. To perform this translation, toggle the switch at the top of the screen to select the ARI *String Input* option. 
+In the Text Input mode, the ANMS transcodes string ARIs to CBOR, which can then be sent to Agents. To perform this translation, toggle the switch at the top of the screen to select the ARI *Text Input* option.
 
 [#fig-ari-string-transcode]
 .ARI String Transcoder
@@ -463,7 +443,7 @@ image::images/ari-param-in-ac.png[]
 For parameters that also require parameters, the system will generate additional input fields.
 
 [#fig-ari-param-in-ac-filled]
-.ARI Parameter Added to an AC with its own parameter
+.ARI Parameter Added to an AC concatenated in ARI text
 image::images/ari-param-in-ac-filled.png[]
 
 After all ARI parameters have been filled in, the system will generate the new string URI that is shown beneath the parameter fields. This string URI is sent via anms-core to the transcoder to be translated. The final result of the translation is displayed in the table at the bottom of the page, as depicted in <<fig-completed-ari-build>>. 
@@ -478,11 +458,6 @@ NOTE: An ARI that is currently being translated by the ANMS will be marked as "p
 .Translated ARI with Input String and CBOR Output
 image::images/completed-ari-build.png[]
 
-To start building a new ARI simply select the 'X' clear selected button on the right hand side of the search bar. This will reset the builder screen, making it ready for the user to select a new ARI to build. 
-
-[#fig-reset-ari-build]
-.reset ari builder area
-image::images/reset-ari-build.png[]
 
 The transcoded ARI table provides the following information:
 
@@ -568,7 +543,7 @@ image::images/adms-table.png[]
 
 ==== Downloading ADMs
 
-Selecting an ADM's name will download the associated yang file.
+Clicking an ADM's download button will download the associated yang file.
 
 [#fig-adm-download]
 .Downloading ADM
@@ -733,32 +708,13 @@ After successfully sending the control to the Agent a success popup should be di
 
 
 
-TODO
-[#fig-transcoded-rpt-ari2]
-.Generate Report ARI and CBOR Representations
-image::images/transcoded-rpt-ari.png[]
-
-Now that the control has been built, the CBOR can be sent to the desired Agent(s). Click the CBOR entry for the translated ARI and 
-the UI will redirect to the `Agents` tab.
-
-At the bottom of the page, fill in the address of the Agent (or a comma separated list if providing multiple Agents) to send the 
-control to. In <<fig-managed-agent2>>, the Agent address is ipn:2.6.
-
-[#fig-managed-agent2]
-.Manage Agent ipn:2.6
-image::images/managed-agent.png[]
-
-Select the `Manage` button to open the modal for Agent handling. The input box for a `Text Input` will be auto-filled 
-with the CBOR selected from the *Build* tab. Select the `Submit` button to send the CBOR command to the Agent.
-
-TODO
 [#fig-raw-cmd2]
 .Auto-filled CBOR in RAW Command Field
 image::images/raw-cmd.png[]
 
 After successfully sending the control to the Agent a success popup should be displayed in the upper right portion of the screen.
 
-TODO
+
 [#fig-cmd-success2]
 .Command Sent Successfully
 image::images/cmd-success.png[]
@@ -799,7 +755,3 @@ There is a https://github.com/NASA-AMMOS/anms/blob/main/CONTRIBUTING.md[`CONTRIB
 Separate from the source for the ANMS proper, the ANMS Product Guide and User Guide are hosted on a GitHub repository <<anms-docs>>, with its own https://github.com/NASA-AMMOS/anms-docs/blob/main/CONTRIBUTING.md[`CONTRIBUTING.md`] document for submitting tickets about either the Product Guide or User Guide.
 
 While the GitHub repositories are the primary means by which users should submit detailed tickets, other inquiries can be made directly via email to the the support address mailto:dtnma-support@jhuapl.edu[,ANMS Support].
-
-
-[index]
-== Index
