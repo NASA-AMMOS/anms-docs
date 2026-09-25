@@ -709,7 +709,7 @@ Resulting Text ARI::
 ----
 ari:/EXECSET/n=42;(ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-exec-succeeded))
 ----
-CBOR:: as hexadecimal (with spaces addded for this document)
+CBOR:: as hexadecimal (with spaces added for this document)
 ----
 0x821482182A8564696574666B64746E6D612D6167656E742267696E7370656374818464696574666 B64746E6D612D6167656E7423726E756D2D657865632D737563636565646564
 ----
