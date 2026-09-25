@@ -459,50 +459,65 @@ NOTE: An ARI that is currently being translated by the ANMS will be marked as "p
 image::images/completed-ari-build.png[]
 
 
-The transcoded ARI table provides the following information:
+The transcoded ARI table provides the following information in its columns:
 
-.Transcoded ARI Table Contents
-|===
-|Column Label | Description | Type | Sample Value | Notes  
+[%unbreakable]
+--
+Transcoder Log ID::
+This is the unique ID number of the transaction.
+It is used primarily for debugging purposes to correlate with ANMS internal log entries.
 
-| Transcoder Log ID 
-| The ID of the transaction.
-| UINT
-| 38
-| Used primarily for debugging purposes.
+Input String::
+This is the user input text sent to the Transcoder.
++
+An example of this is
++
+----
+ari://ietf/dtnma-agent/EDD/num-msg-tx
+----
++
+NOTE: The input string is also shown below the search bar on the ARI Build tab.
 
-| Input String
-| The user input sent to the Transcoder.
-| String
-| `ari://ietf/dtnma-agent/EDD/num-msg-tx`
-| The URI string shown below the search bar on the ARI Build tab.
+Parsed As::
+This is the determined format of the Input String.
+The value will be one of the following:
+pending::: The state while transcoding is in progress.
+URI::: After the provided input is successfully parsed as a URI
+ERROR::: The state after an error was encountered while translating. See ARI column for the error reported.
 
-| Parsed As
-| The determined format of the Input String.
-| STR
-| URI
-| Set to "pending" while transcoding is in progress. Set to "URI" if provided input is successfully parsed as a URI. Set to "ERROR" if an error was encountered while translating, see ARI column for the error reported.
+CBOR::
+This is the CBOR generated from the Input String, shown as a base-16 (hexadecimal) encoding of the bytes with an indicator prefix "0x".
++
+An example of this is the following:
++
+----
+0x8464696574666B64746E6D612D6167656E74236A6E756D2D6D73672D7478
+----
++
+NOTE: This is the actual encoded value sent to an Agent.
 
+ARI::
+This text contains details regarding ARI parsing from the transcoder.
+This is set to a populated "ReferenceARI" object if transcoding was successful. 
++
+An example of this is the following full error:
++
+----
+Failed to process: Error decoding from `ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)`: Failed to parse \"ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)\": Syntax error in input at: LexToken(COMMA,',',1,63)
+----
 
-| CBOR
-| The CBOR generated from the Input String.
-| Hex
-| 0x8464696574666B64746E6D612D6167656E74236A6E756D2D6D73672D7478
-| Agent-parseable ARI.
-
-| Ari
-| Details regarding ARI parsing from the transcoder. 
-| STR
-| "Failed to process: Error decoding from `ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)`: Failed to parse \"ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)\": Syntax error in input at: LexToken(COMMA,',',1,63)"
-| Set to a populated "ReferenceARI" object if transcoding was successful. 
-
-| Uri
-| The URI generated from the user input.
-| STR
-| "ari:/EXECSET/n=13;(//ietf/dtnma-agent/CTRL/inspect(//ietf/dtnma-agent/EDD/const-list(/BOOL/true)))"
-| Set to "" if transcoding was unsuccessful. Should be the same value of "Input String" if "type" is "URI". Consult the Ari field for further details on parsing/processing errors.
-
-|===
+Uri::
+This is the URI generated from the user input.
+This is set to an empty value if transcoding was unsuccessful.
+It should be the same value of "Input String" if "type" is "URI".
+Consult the "Ari" field for further details on parsing/processing errors.
++
+An example of this is the following URI text:
++
+----
+ari:/EXECSET/n=13;(//ietf/dtnma-agent/CTRL/inspect(//ietf/dtnma-agent/EDD/const-list(/BOOL/true)))
+----
+--
 
 The ANMS-generated CBOR in the table provides ARIs in the format Agents expect. To send the CBOR ARI to an Agent, click the value in the table. This will display all registered Agents. When an Agent is selected, the details for that Agent and the option to send a CBOR ARI is provided. This process is discussed in detail in <<sec-agents>>.
 
@@ -518,7 +533,10 @@ The Status page provides a summary of the overall health and status of the ANMS 
 
 Select the "Check Service Status" button to refresh the health and status data displayed for the ANMS services.
 
-This service is dependent on the anms-core service, so if it is in an error state then this page will display an `AxiosError: Request failed with status code 502` error message. 
+This service is dependent on the anms-core service, so if it is in an error state then this page will display an error message:
+
+[quote]
+AxiosError: Request failed with status code 502
 
 [#fig-status]
 .ANMS Status
@@ -576,7 +594,12 @@ This sample workflow shows the construction of a custom panel to view a report v
 but can be modified to plot any data points of interest within the ANMS UI.
 
 In this example, the user wants to know the number of times a report message is sent by a particular agent. 
-This can be achieved using Grafana to plot the `num-msg-rx` EDD defined in the dtnma-agent ADM. An execution set containing the `(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx")` control would of had to be sent to the agent to generate these results.  This example uses the execution set `ari:/EXECSET/n=1234;(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx"))` 
+This can be achieved using Grafana to plot the `num-msg-rx` EDD defined in the dtnma-agent ADM.
+An execution set containing the `(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx")` control would of had to be sent to the agent to generate these results.
+This example uses the following execution set
+----
+ari:/EXECSET/n=1234;(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx"))
+---- 
 
 Grafana uses SQL queries to pull data from the ANMS database and display it to the user. 
 
@@ -599,8 +622,10 @@ FROM
 
 To plot a specific variable from a specific execution_set use a where clause to select only report sets that match the correlator_nonce for the execution_set that contains the needed information, for this example the correlator_nonce 1234 was used.
 In the example below, in order to retrieve the `num-msg-rx` value, we need to incorporate an SQL `REGEXP_MATCHES` function to separate entries in the `report_list` field. 
-The execution_set used the inspect control that takes one parameter, the element you want to generate values for, so for this example that parameter is `num-msg-rx` which means the report sets generated will only contain one value. We can then generate a regular express, `'^.*;\(/UVAST/(\d+)\)\)$'`,  that pulls the /UVAST/ value ( the only value in the report set) from the `report_list` field. 
-Finally, we cast the value to the proper type. Now the query <<sql-tbr-query>> can be executed to extract the data needed to generate a Grafana graph.
+The execution_set used the inspect control that takes one parameter, the element you want to generate values for, so for this example that parameter is `num-msg-rx` which means the report sets generated will only contain one value.
+We can then generate a regular expression `^.\*;\(/UVAST/(\d+)\)\)$` that pulls the `UVAST`-type value (the only value in the report set) from the `report_list` field. 
+Finally, we cast the value to the proper type.
+Now the query below <<sql-tbr-query>> can be executed to extract the data needed to generate a Grafana graph.
 
 [#sql-tbr-query]
 .SQL Query for Number of Time-Based Rules Run by an Agent
@@ -608,7 +633,7 @@ Finally, we cast the value to the proper type. Now the query <<sql-tbr-query>> c
 ----
 SELECT 
     floor(extract(epoch from reference_time::timestamp)/60)*60 as time,
-    (REGEXP_MATCHES(report_list,'^.*;\(/UVAST/(\d+)\)\)$'))[1]::int as value,
+    (REGEXP_MATCHES(report_list,'^.\*;\(/UVAST/(\d+)\)\)$'))[1]::int as value,
     agent_id AS metric
 FROM ari_rptset 
 where correlator_nonce = 1234
@@ -655,10 +680,14 @@ To generate a report, the `inspect` or `report-on` control can be used.
 1. An ARI Collection (AC) specifying the report template(s) that should be populated by the Agent.
 2. A endpoint-or-uri identifying the Manager(s) that are the intended recipients of the report(s). Can be null.
 
-First, navigate to the `Build` tab of the ANMS and toggle the switch at the top to use the ARI Builder. Check the Execution set box and enter in a unique nonce.
+First, navigate to the `Build` tab of the ANMS and toggle the switch at the top to use the ARI Builder.
+Check the Execution set box and enter in a unique nonce.
 In the ARI search box, find the  AMP Agent `report-on` or `inspect` control.
-`ari://ietf/dtnma-agent/CTRL/report-on(//ietf/amm-base/typedef/rpt-tgt/template,//ietf/network-base/typedef/endpoint-or-uri|/aritype/null/destinations)`
-`ari://ietf/dtnma-agent/CTRL/inspect(//ietf/amm-base/typedef/VALUE-OBJ/ref)` 
+
+----
+ari://ietf/dtnma-agent/CTRL/report-on(//ietf/amm-base/typedef/rpt-tgt/template,//ietf/network-base/typedef/endpoint-or-uri|/aritype/null/destinations)
+ari://ietf/dtnma-agent/CTRL/inspect(//ietf/amm-base/typedef/VALUE-OBJ/ref)
+----
 
 [#fig-gen-rpt-search]
 .Inspect ARI
@@ -681,8 +710,14 @@ The system create the AC and any additional parameter fields as needed. `num-exe
 Now that all the parameters are filled out, select the `SUBMIT ARI String` button which will generate the string ARI. This string ARI is sent to the 
 transcoder and will be available in the lower table after it has ben processed.
 
-*Resulting String ARI:* `ari:/EXECSET/n=42;(ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-exec-succeeded))`
-*CBOR:* `0x821482182A8564696574666B64746E6D612D6167656E742267696E7370656374818464696574666B64746E6D612D6167656E7423726E756D2D657865632D737563636565646564`
+Resulting Text ARI::
+----
+ari:/EXECSET/n=42;(ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-exec-succeeded))
+----
+CBOR:: as hexadecimal (with spaces added for this document)
+----
+0x821482182A8564696574666B64746E6D612D6167656E742267696E7370656374818464696574666 B64746E6D612D6167656E7423726E756D2D657865632D737563636565646564
+----
 
 [#fig-transcoded-rpt-ari]
 .Generate Report ARI and CBOR Representations
