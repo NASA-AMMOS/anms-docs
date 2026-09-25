@@ -533,7 +533,10 @@ The Status page provides a summary of the overall health and status of the ANMS 
 
 Select the "Check Service Status" button to refresh the health and status data displayed for the ANMS services.
 
-This service is dependent on the anms-core service, so if it is in an error state then this page will display an `AxiosError: Request failed with status code 502` error message. 
+This service is dependent on the anms-core service, so if it is in an error state then this page will display an error message:
+
+[quote]
+AxiosError: Request failed with status code 502
 
 [#fig-status]
 .ANMS Status
