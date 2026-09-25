@@ -594,7 +594,12 @@ This sample workflow shows the construction of a custom panel to view a report v
 but can be modified to plot any data points of interest within the ANMS UI.
 
 In this example, the user wants to know the number of times a report message is sent by a particular agent. 
-This can be achieved using Grafana to plot the `num-msg-rx` EDD defined in the dtnma-agent ADM. An execution set containing the `(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx")` control would of had to be sent to the agent to generate these results.  This example uses the execution set `ari:/EXECSET/n=1234;(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx"))` 
+This can be achieved using Grafana to plot the `num-msg-rx` EDD defined in the dtnma-agent ADM.
+An execution set containing the `(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx")` control would of had to be sent to the agent to generate these results.
+This example uses the following execution set
+----
+ari:/EXECSET/n=1234;(ari://ietf/dtnma-agent/CTRL/inspect("ari://ietf/dtnma-agent/EDD/num-msg-rx"))
+---- 
 
 Grafana uses SQL queries to pull data from the ANMS database and display it to the user. 
 
