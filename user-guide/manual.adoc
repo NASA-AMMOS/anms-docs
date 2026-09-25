@@ -465,7 +465,7 @@ The transcoded ARI table provides the following information in its columns:
 --
 Transcoder Log ID::
 This is the unique ID number of the transaction.
-It is used primarily for debugging purposes to correlate with backend log entries.
+It is used primarily for debugging purposes to correlate with ANMS internal log entries.
 
 Input String::
 This is the user input text sent to the Transcoder.
