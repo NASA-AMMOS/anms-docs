@@ -459,50 +459,65 @@ NOTE: An ARI that is currently being translated by the ANMS will be marked as "p
 image::images/completed-ari-build.png[]
 
 
-The transcoded ARI table provides the following information:
+The transcoded ARI table provides the following information in its columns:
 
-.Transcoded ARI Table Contents
-|===
-|Column Label | Description | Type | Sample Value | Notes  
+[%unbreakable]
+--
+Transcoder Log ID::
+This is the unique ID number of the transaction.
+It is used primarily for debugging purposes to correlate with backend log entries.
 
-| Transcoder Log ID 
-| The ID of the transaction.
-| UINT
-| 38
-| Used primarily for debugging purposes.
+Input String::
+This is the user input text sent to the Transcoder.
++
+An example of this is
++
+----
+ari://ietf/dtnma-agent/EDD/num-msg-tx
+----
++
+NOTE: The input string is also shown below the search bar on the ARI Build tab.
 
-| Input String
-| The user input sent to the Transcoder.
-| String
-| `ari://ietf/dtnma-agent/EDD/num-msg-tx`
-| The URI string shown below the search bar on the ARI Build tab.
+Parsed As::
+This is the determined format of the Input String.
+The value will be one of the following:
+pending::: The state while transcoding is in progress.
+URI::: After the provided input is successfully parsed as a URI
+ERROR::: The state after an error was encountered while translating. See ARI column for the error reported.
 
-| Parsed As
-| The determined format of the Input String.
-| STR
-| URI
-| Set to "pending" while transcoding is in progress. Set to "URI" if provided input is successfully parsed as a URI. Set to "ERROR" if an error was encountered while translating, see ARI column for the error reported.
+CBOR::
+This is the CBOR generated from the Input String, shown as a base-16 (hexadecimal) encoding of the bytes with an indicator prefix "0x".
++
+An example of this is the following:
++
+----
+0x8464696574666B64746E6D612D6167656E74236A6E756D2D6D73672D7478
+----
++
+NOTE: This is the actual encoded value sent to an Agent.
 
+ARI::
+This text contains details regarding ARI parsing from the transcoder.
+This is set to a populated "ReferenceARI" object if transcoding was successful. 
++
+An example of this is the following full error:
++
+----
+Failed to process: Error decoding from `ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)`: Failed to parse \"ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)\": Syntax error in input at: LexToken(COMMA,',',1,63)
+----
 
-| CBOR
-| The CBOR generated from the Input String.
-| Hex
-| 0x8464696574666B64746E6D612D6167656E74236A6E756D2D6D73672D7478
-| Agent-parseable ARI.
-
-| Ari
-| Details regarding ARI parsing from the transcoder. 
-| STR
-| "Failed to process: Error decoding from `ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)`: Failed to parse \"ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)\": Syntax error in input at: LexToken(COMMA,',',1,63)"
-| Set to a populated "ReferenceARI" object if transcoding was successful. 
-
-| Uri
-| The URI generated from the user input.
-| STR
-| "ari:/EXECSET/n=13;(//ietf/dtnma-agent/CTRL/inspect(//ietf/dtnma-agent/EDD/const-list(/BOOL/true)))"
-| Set to "" if transcoding was unsuccessful. Should be the same value of "Input String" if "type" is "URI". Consult the Ari field for further details on parsing/processing errors.
-
-|===
+Uri::
+This is the URI generated from the user input.
+This is set to an empty value if transcoding was unsuccessful.
+It should be the same value of "Input String" if "type" is "URI".
+Consult the "Ari" field for further details on parsing/processing errors.
++
+An example of this is the following URI text:
++
+----
+ari:/EXECSET/n=13;(//ietf/dtnma-agent/CTRL/inspect(//ietf/dtnma-agent/EDD/const-list(/BOOL/true)))
+----
+--
 
 The ANMS-generated CBOR in the table provides ARIs in the format Agents expect. To send the CBOR ARI to an Agent, click the value in the table. This will display all registered Agents. When an Agent is selected, the details for that Agent and the option to send a CBOR ARI is provided. This process is discussed in detail in <<sec-agents>>.
 
@@ -599,8 +614,10 @@ FROM
 
 To plot a specific variable from a specific execution_set use a where clause to select only report sets that match the correlator_nonce for the execution_set that contains the needed information, for this example the correlator_nonce 1234 was used.
 In the example below, in order to retrieve the `num-msg-rx` value, we need to incorporate an SQL `REGEXP_MATCHES` function to separate entries in the `report_list` field. 
-The execution_set used the inspect control that takes one parameter, the element you want to generate values for, so for this example that parameter is `num-msg-rx` which means the report sets generated will only contain one value. We can then generate a regular express, `'^.*;\(/UVAST/(\d+)\)\)$'`,  that pulls the /UVAST/ value ( the only value in the report set) from the `report_list` field. 
-Finally, we cast the value to the proper type. Now the query <<sql-tbr-query>> can be executed to extract the data needed to generate a Grafana graph.
+The execution_set used the inspect control that takes one parameter, the element you want to generate values for, so for this example that parameter is `num-msg-rx` which means the report sets generated will only contain one value.
+We can then generate a regular expression `^.\*;\(/UVAST/(\d+)\)\)$` that pulls the `UVAST`-type value (the only value in the report set) from the `report_list` field. 
+Finally, we cast the value to the proper type.
+Now the query below <<sql-tbr-query>> can be executed to extract the data needed to generate a Grafana graph.
 
 [#sql-tbr-query]
 .SQL Query for Number of Time-Based Rules Run by an Agent
@@ -608,7 +625,7 @@ Finally, we cast the value to the proper type. Now the query <<sql-tbr-query>> c
 ----
 SELECT 
     floor(extract(epoch from reference_time::timestamp)/60)*60 as time,
-    (REGEXP_MATCHES(report_list,'^.*;\(/UVAST/(\d+)\)\)$'))[1]::int as value,
+    (REGEXP_MATCHES(report_list,'^.\*;\(/UVAST/(\d+)\)\)$'))[1]::int as value,
     agent_id AS metric
 FROM ari_rptset 
 where correlator_nonce = 1234
