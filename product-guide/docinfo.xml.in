@@ -1,10 +1,12 @@
-<subtitle>DOC-005444, Prepared by The Johns Hopkins Applied Physics Laboratory</subtitle>
-<!-- <edition>@PROJECT_VERSION@</edition> -->
+<subtitle>DOC-005444</subtitle>
 <author>
-  <orgname>
-    JHU/APL
-  </orgname>
+  <personname>
+    <othername>
+Prepared by The Johns Hopkins University Applied Physics Laboratory
+    </othername>
+  </personname>
 </author>
+<releaseinfo></releaseinfo>
 <copyright>
   <year>2023-2026</year>
   <holder>The Johns Hopkins University Applied Physics Laboratory LLC</holder>
