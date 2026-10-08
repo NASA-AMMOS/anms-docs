@@ -47,11 +47,11 @@ add_custom_command(
     OUTPUT ${OUT_DBOOK}
     DEPENDS ${ADOC_SOURCE} ${ADOC_EXTRAS} ${OUT_DOCINFO}
     COMMAND
-        ${ASCIIDOC} -v -r asciidoctor-diagram
+        ${ASCIIDOC} -r asciidoctor-diagram
         --base-dir ${CMAKE_CURRENT_SOURCE_DIR}
         --destination-dir ${CMAKE_CURRENT_BINARY_DIR}
         -o ${OUT_DBOOK}
-    ${ADOC_SOURCE}
+        ${ADOC_SOURCE}
 )
 # Place source images into build directory
 set(INSTALL_IMGS ${CMAKE_CURRENT_SOURCE_DIR}/install_imgs.sh)
@@ -160,7 +160,7 @@ if(XMLSTARLET AND ASPELL)
             "${OUT_HTML}" "misspelling.txt"
         COMMAND
             ${XMLSTARLET} fo "${OUT_HTML}" |
-            grep --file "misspelling.txt" >"misspelling-ctx.txt" || true
+            grep --word-regexp --file "misspelling.txt" >"misspelling-ctx.txt" || true
     )
     add_custom_target(
         ${PROJECT_NAME}-misspelling ALL
