@@ -473,7 +473,7 @@ This is the user input text sent to the Transcoder.
 An example of this is
 +
 ----
-ari://ietf/dtnma-agent/EDD/num-msg-tx
+ari://ietf/dtnma-agent/ctrl/report-on(/ac/(//ietf/dtnma-agent/EDD/num-msg-tx))
 ----
 +
 NOTE: The input string is also shown below the search bar on the ARI Build tab.
@@ -491,7 +491,7 @@ This is the CBOR generated from the Input String, shown as a base-16 (hexadecima
 An example of this is the following:
 +
 ----
-0x8464696574666B64746E6D612D6167656E74236A6E756D2D6D73672D7478
+0x8501012206818211818401012305
 ----
 +
 NOTE: This is the actual encoded value sent to an Agent.
@@ -501,7 +501,13 @@ This text contains details regarding ARI parsing from the transcoder.
 This shows the state of a populated "ReferenceARI" object if transcoding was successful.
 It shows a detailed error message if not successful.
 +
-An example of this is the following full error:
+An example of successful processing is the following:
++
+----
+ReferenceARI(ident=Identity(org_id='ietf', model_id='dtnma-agent', model_rev=None, type_id=<StructType.CTRL: -3>, obj_id='report-on'), params=(LiteralARI(value=(ReferenceARI(ident=Identity(org_id='ietf', model_id='dtnma-agent', model_rev=None, type_id=<StructType.EDD: -4>, obj_id='num-msg-tx'), params=None),), type_id=<StructType.AC: 17>),))
+----
++
+An example of an error is the following:
 +
 ----
 Failed to process: Error decoding from `ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)`: Failed to parse \"ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)\": Syntax error in input at: LexToken(COMMA,',',1,63)
