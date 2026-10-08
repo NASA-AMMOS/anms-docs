@@ -498,24 +498,13 @@ NOTE: This is the actual encoded value sent to an Agent.
 
 ARI::
 This text contains details regarding ARI parsing from the transcoder.
-This is set to a populated "ReferenceARI" object if transcoding was successful. 
+This shows the state of a populated "ReferenceARI" object if transcoding was successful.
+It shows a detailed error message if not successful.
 +
 An example of this is the following full error:
 +
 ----
 Failed to process: Error decoding from `ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)`: Failed to parse \"ari://ietf/dtnma-agent/CTRL/ensure-tbr(//ARITYPE/NAMESPACE/ietf,//ietf/amm-base/typedef/id-text(tbr_1),//ietf/amm-base/typedef/id-int(0),ari://ietf/dtnma-agent/CTRL/inspect(ari://ietf/dtnma-agent/EDD/num-msg-rx),/TD/5,/TD/10,/UVAST/10,/UVAST/10,/BOOL/true)\": Syntax error in input at: LexToken(COMMA,',',1,63)
-----
-
-Uri::
-This is the URI generated from the user input.
-This is set to an empty value if transcoding was unsuccessful.
-It should be the same value of "Input String" if "type" is "URI".
-Consult the "Ari" field for further details on parsing/processing errors.
-+
-An example of this is the following URI text:
-+
-----
-ari:/EXECSET/n=13;(//ietf/dtnma-agent/CTRL/inspect(//ietf/dtnma-agent/EDD/const-list(/BOOL/true)))
 ----
 --
 
