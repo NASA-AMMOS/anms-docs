@@ -115,10 +115,10 @@ The network protocol used for inter-container communication and for BP convergen
 |DOC-005445
 
 |ANMS Software Interface Specification[[anms-sis,ANMS SIS]]
-|DOC-005446
+|DOC-005446 rev B
 
 |ANMS User Guide[[anms-user-guide,ANMS User Guide]]
-|DOC-005443 rev B
+|DOC-005443 rev C
 
 |===
 
@@ -413,25 +413,23 @@ When reports arrive from managed agents and are associated with known ADMs they 
 This chapter includes procedures related to development and pre-production testing of the ANMS.
 These procedures assume that the user has a working copy of the ANMS source tree an intends to make some changes to the source or the configuration outside of a normal production deployment procedure (where build happens on a different host from the ultimate installation).
 
-[#sec-devel-deploy]
-=== Test Build and Deployment
-
-TBD
-
 [#sec-devel-install]
 === Production-Like Build and Installation
 
 This procedure builds images in the root user's podman context and then uses puppet to install to the local host.
-
-More TBD
+Full production build and installation are explained in <<sec-proc>>.
 
 . Images for all of the ANMS production and test containers can be built with the following:
-```
++
+[source,bash]
+----
 sudo AUTHNZ_EMU=authnz-emu podman compose -p anms -f docker-compose.yml --podman-build-args='--format docker' build
 sudo podman compose -p agents -f agent-compose.yml --podman-build-args='--format docker' build
-```
+----
++
 . The deployment configuration is set by editing the file `puppet/data/override.yaml` to contain similar to:
 +
+[source,bash]
 ----
 anms::docker_image_prefix: "" # Left empty to use locally built images
 anms::docker_image_tag: "latest"
@@ -443,12 +441,14 @@ anms::docker_image_tag: "latest"
 ----
 . Perform a dry-run of the puppet apply with:
 +
+[source,bash]
 ----
 sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test --noop
 ----
 and verify that there are no unexpected changes.
 . Perform the actual puppet apply with:
 +
+[source,bash]
 ----
 sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test
 ----
@@ -459,12 +459,32 @@ sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test
 
 This chapter includes specific procedures related to managing an ANMS production instance.
 
+[#sec-proc-prereq]
+=== Prerequisites
+
+Before building, ensure that either Docker or Podman (preferred) is installed and functional on your system along with the docker-compose tool.
+A hello-world image can be run to verify functionality, _i.e._ `docker run --rm hello-world` or `podman run --rm hello-world`.
+
+Compose can be verified with `podman compose version`, which will print a version identifier if successful.
+If compose is not properly installed it will report 'unrecognized command'
+
+The ANMS uses ((Puppet)) version 7 <<puppet-agent>> to install requisite system packages and configure system files and services.
+In addition, ((Bolt)) <<puppet-bolt>> is needed to install needed Puppet modules and run the Puppet agent remotely.
+
+Installing prerequisites beyond Puppet and Bolt can be automated local scripts from these commands:
+
+[source,bash]
+----
+./puppet/prep.sh
+./puppet/apply_local.sh -e 'include anms::hostenv' --test
+----
+
+One of the prerequisites for a production host environment is enabling ((SELinux)) and ((FIPS-140)) "FIPS mode" in the operating system, which is configured by that Puppet module.
+
 [#sec-proc-build]
 === Building
 
 The ANMS source is composed of a top-level repository `anms` and a number of submodule repositories; all of them are required for building the ANMS.
-
-Before beginning, ensure that either Docker or Podman (preferred) is installed and functional on your system along with docker-compose.  A hello-world image can be run to verify functionality, _i.e._ `docker run --rm hello-world` or `podman run --rm hello-world`.  Compose can be verified with `podman compose ps` - If compose is not properly installed it will report 'unrecognized command'
 
 . The top-level checkout can be done with:
 +
@@ -477,14 +497,16 @@ git clone --recursive --branch <TAGNAME> https://github.com/NASA-AMMOS/anms.git
 git checkout <TAGNAME>
 git submodule update --init --recursive
 ----
-. If running containers as the root user (not recommended. Podman defaults to rootless), it may be necessary to add the local user to the `docker` access group with the following. :
+. If running containers as the root user (which is not recommended because Podman defaults to rootless), it may be necessary to add the local user to the `docker` access group with the following. :
 +
+[source,bash]
 ----
 sudo usermod -a -G docker ${USER}
 ----
 . Update `.env` file as needed.  Fields that may need to be updated include `DOCKER_IMAGE_PREFIX` and for rootless podman the port mappings for AUTHNZ may need to be un-commented to avoid permissions issues
 . Build images using either: (Note: The podman-build-args flag is required for health checks to function under podman).
 +
+[source,bash]
 ----
 docker compose -f docker-compose.yml -f testenv-compose.yml build
 podman compose --podman-build-args='--format docker' -f docker-compose.yml -f testenv-compose.yml build
@@ -495,6 +517,8 @@ podman compose --podman-build-args='--format docker' -f docker-compose.yml -f te
 [NOTE]
 ====
 To build an ANMS that uses an emulator for the CAM Gateway (which means that the ANMS will not require a CAM server), have the following environment set in the build step above. (Note: The default value that uses the CAM Gateway is `cam-gateay`):
+
+[source,bash]
 ----
 export AUTHNZ_EMU=demo
 ----
@@ -503,8 +527,7 @@ export AUTHNZ_EMU=demo
 [#sec-proc-install]
 === Installation
 
-The ANMS uses Puppet version 7 <<puppet-agent>> to install requisite system packages and configure system files and services.
-In addition, Bolt <<puppet-bolt>> is needed to install needed Puppet modules and run the Puppet agent remotely.
+These procedures rely on the host prerequisites explained in <<sec-proc-prereq>>, which can be installed manually or by automation tools.
 
 CAUTION: The example TLS configuration in this procedure is for demonstration only and must not be present in a production installation.
 Details for creating a proper TLS volume are in <<sec-proc-install-tls>>.
@@ -514,6 +537,7 @@ To install the ANMS on the local host perform the following:
 . A TLS configuration must be embedded in a volume mounted by the `authnz` frontend container with contents described in <<sec-proc-install-tls>>.
 This can be done with a boilerplate test-only CA and certificates by running:
 +
+[source,bash]
 ----
 ./create_volume.sh ./puppet/modules/apl_test/files/anms/tls
 ----
@@ -532,12 +556,14 @@ anms::docker_registry_pass: ""
 ----
 . Perform a dry-run of the puppet apply with:
 +
+[source,bash]
 ----
 sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test --noop
 ----
 and verify that there are no unexpected changes.
 . Perform the actual puppet apply with:
 +
+[source,bash]
 ----
 sudo PATH=/opt/puppetlabs/bin:$PATH ./puppet/apply_local.sh --test
 ----
@@ -573,19 +599,21 @@ This should only be used for test hosts or after performing a full Postgres DB b
 
 To force containers and volumes (containing long-term database files) to be cleared, a maintainer can run the following from the host.
 
-```
+[source,bash]
+----
 podman stop --all
 podman system prune --all --volumes
-```
+----
 
 To verify artifacts have been removed you may use the following.  The prune command (or object-specific prune command) may need to be reissued if not all relevant artifacts have been cleared.
 
-```
+[source,bash]
+----
 podman image ls
 podman container ls
 podman volume ls
 podman network ls
-```
+----
 
 TIP: In some cases, issues may arise due to system cache files on the host system not being cleared (a potential issue with select podman versions). It is recommended to restart the host system after clearing objects to ensure a clean start.
 
@@ -596,9 +624,11 @@ After clearing containers and volumes, the normal `apply_local` step of <<sec-pr
 
 
 To enable Wireshark logging with patched AMP dissector, run similar to the following:
-```
+
+[source,bash]
+----
 wireshark -i br-anms -f 'port 1113 or port 4556' -k
-```
+----
 
 [#sec-proc-db-backup]
 === Long-Term Database Backup and Restore
@@ -606,34 +636,39 @@ wireshark -i br-anms -f 'port 1113 or port 4556' -k
 Although the docker volume `anms_postgres` contains the raw database state, this will not allow backup of or transferring that state to other hosts.
 
 To perform an online backup (keeping the database running) run the following on the host:
-```
+
+[source,bash]
+----
 podman compose -p anms exec -T postgres pg_dump -Ft -d amp_core | gzip -c >~/anms-backup.tar.gz
-```
+----
 which can the later be restored using:
-```
+
+[source,bash]
+----
 gunzip -c <~/anms-backup.tar.gz | podman compose -p anms exec -T postgres pg_restore --clean -d amp_core
-```
+----
 
 
 [#sec-proc-mon-docker]
 ==== Container State and Logs
 
 Because of the Compose configuration described in <<sec-host-files>>, accessing container state and logs requires running podman with a command similar to the following:
-```
+
+----
 podman compose -p anms [action] ...
-```
+----
 
 The state of all containers in the ANMS project can be observed with:
-```
+----
 podman compose -p anms ps
-```
+----
 which will report a "State" column either as "Up" for simple services or "Up (healthy)" for health-checked services.
 
 
 And observing logs from specific containers requires running a command similar to:
-```
+----
 podman compose -p anms logs [service-name]
-```
+----
 
 
 [#sec-proc-mon-selinux]
@@ -644,6 +679,8 @@ The procedures in this section are a summary of more detail provided in Chapter 
 By default, the `setroubleshootd` service is running, which intercepts SELinux audit events
 
 To observe the system audit log in a formatted way run:
+
+[source,bash]
 ----
 sudo sealert -l '*'
 ----
@@ -651,6 +688,8 @@ sudo sealert -l '*'
 Some SELinux denials are marked as "don't audit" which suppresses normal audit logging when they occur.
 They are often associated with network access requests which would flood an audit log if they happen often and repeatedly.
 To enable logging of `dontaudit` events run:
+
+[source,bash]
 ----
 sudo semanage dontaudit off
 ----
@@ -677,12 +716,14 @@ The checkout procedure is as follows:
 
 . From the ANMS host verify firewall access with:
 +
+[source,bash]
 ----
 sudo firewall-cmd --zone public --list-services
 ----
 which should include the services "https".
 . From a client host check the port is open with:
 +
+[source,bash]
 ----
 nmap anms-serv -p80,443
 ----
@@ -696,6 +737,7 @@ PORT    STATE  SERVICE
 ----
 . From a client host check HTTP access with:
 +
+[source,bash]
 ----
 curl --head https://anms-serv/
 ----
@@ -709,6 +751,7 @@ Location: /authn/login.html
 ----
 . From a client host check a test login account with:
 +
+[source,bash]
 ----
 curl --head --user test https://anms-serv/
 ----
@@ -730,12 +773,15 @@ The checkout procedure is as follows:
 
 . From the ANMS host verify the proxy socket exists with:
 +
+[source,bash]
 ----
 ls -l /run/anms/
 ----
 which should include the file "proxy.sock".
 
 . From the ANMS host check the REFDM daemon logs with:
++
+[source,bash]
 ----
 docker compose -p anms exec -T amp-manager journalctl --unit refdm-proxy | grep -B4 Connected
 ----
@@ -749,12 +795,14 @@ The checkout procedure is as follows:
 
 . From the ANMS host verify firewall access with:
 +
+[source,bash]
 ----
 sudo firewall-cmd --zone public --list-services
 ----
 which should include the services "ltp" and "dtn-bundle-udp".
 . From any RHEL-9 host on the agent network run the following:
 +
+[source,bash]
 ----
 sudo nmap anms-serv -sU -p4556
 ----
@@ -767,6 +815,7 @@ PORT     STATE    SERVICE
 ----
 . From the ANMS host run the following, substituting the host name/address of any valid BP Agent:
 +
+[source,bash]
 ----
 sudo nmap amp-agent -sU -p4556
 ----
@@ -779,6 +828,7 @@ PORT     STATE    SERVICE
 ----
 . From the ANMS host run the following:
 +
+[source,bash]
 ----
 podman compose -p testenv exec ion-manager ion_ping_peers 1 2 3
 ----
@@ -827,12 +877,13 @@ Rootless podman may require different permissions.
 For both the `docker_data/grafana_vol/` folder and the `docker_data/grafana_vol/grafana.db` 
 file, change the group to `docker` and the permissions to `777`: 
 
-```
-$ sudo chgrp docker docker_data/grafana__vol
-$ sudo chgrp docker docker_data/grafana_vol/grafana.db
-$ sudo chmod 777 docker_data/grafana_vol
-$ sudo chmod 777 docker_data/grafana_vol/grafana.db
-```
+[source,bash]
+----
+sudo chgrp docker docker_data/grafana__vol
+sudo chgrp docker docker_data/grafana_vol/grafana.db
+sudo chmod 777 docker_data/grafana_vol
+sudo chmod 777 docker_data/grafana_vol/grafana.db
+----
 
 After changing these permissions, run `podman compose up grafana` again, and the Grafana container should start successfully.
 
@@ -846,9 +897,9 @@ To resolve the issue, restart the ION containers using `podman compose restart n
 
 If registering a new Agent does not result in an update to the displayed Agents in the ANMS Agent tab,  check that it has been registered to the Manager via the nm-manager CLI.
 The nm-manager CLI is accessible from a terminal, and this check can be done using a command such as:
-```
+----
 podman compose -p anms exec amp-manager journalctl -f --unit refdm-proxy
-```
+----
 
 If the results confirm that the Agent is registered but it still does not show on the Agents tab of the ANMS, there may be an 
 issue with connection between the Manager and ANMS database.
@@ -908,9 +959,9 @@ It is sometimes necessary to override configuration files or scripts built into 
 
 For example, to override the ION NM Manager configuration file add the following to the `volumes section of `ion-manager` in `docker-compose.yml`.  Adjust the source file to any relative or absolute path desired.  For this change to take effect, you must restart all containers with `podman compose down` and then restart with `podman compose up`. Simply restarting the affected container may not refresh changes made to the compose file.
 
-```
+----
       - ./ion/configs/simple-2-node/mgr.rc:/etc/ion.rc
-```
+----
 
 This approach can also be used to override sample agent configurations (see agent-compose.yml), extend authentication settings in the selected auth container, or for developers to quickly test changes.
 
@@ -924,7 +975,7 @@ To temporarily install in the ion-manager container run `podman compose exec ion
 
 To use the GUI wireshark, install with `podman compose exec ion-manager yum install wireshark`.  To easily run, create a file `novnc-compose.yml` with the definition below.  Start it with `podman compose -f novnc-compose.yml up`. From the shell run `podman compose exec ion-manager bash` followed by `DISPLAY=novnc:0.0 wireshark` to launch wireshark in the VNC session accessible from http://hostname:9081
 
-```
+----
 # noVNC provides browser access to network to aide debugging.
 # This container is NOT intended for production usage.
 
@@ -946,7 +997,7 @@ services:
       - RUN_XTERM=yes
     ports:
       - "9081:8080"
-```
+----
 
 See <<sec-volume-mount-tip>> for an example of volume mounting a local directory for easier saving of captures for later analysis.  In this case, you may wish to mount a directory instead of a single file, such as `- ./logs:/logs` and append to the tshark command `-w /logs/log.pcap`
 

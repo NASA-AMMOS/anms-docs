@@ -115,7 +115,7 @@ Selecting an item from a drop-down list of available options.
 |DOC-001455 rev G
 
 |ANMS Product Guide[[anms-product-guide,ANMS Product Guide]]
-|DOC-005444 rev A
+|DOC-005444 rev C
 
 |===
 
